@@ -2,9 +2,9 @@
 
 # --------------------------------------------------------------------------------------------------------------------------------
 # Author:		Arie Kraayenbrink
-# Date:			April 19, 2018
+# Date:			Jan 8, 2019
 # File Name:	makefile.sh
-# Description:	This script will run the make files within the following folders: chat-server, chat-client and common
+# Description:	This script will run the make files within the following folders: server, client and common
 #				It will also copy the executables to the common/bin folder and make sure they have permsions to run.
 # --------------------------------------------------------------------------------------------------------------------------------
 

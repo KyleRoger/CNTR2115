@@ -1,11 +1,11 @@
 # -----------------------------------------------------------------------
 # File			: makefile
-# Project		: CHAT-SYSTEM
+# Project		: ispeed
 # Author 		: Arie Kraayenbrink
 # Editors		: Arie kraayenbrink
-# Date 			: March 29, 2018
+# Date 			: Jan. 8, 2019
 # Description 	: This makefile will compile and link all source files
-#             	: in the chat-server part of the system.  
+#             	: in the server part of the system.  
 # ------------------------------------------------------------------------
 
 
@@ -19,7 +19,7 @@ RM_BIN=rm -f ./bin/*
 RM_OBJ=rm -f ./obj/*.o
 RM_INC=rm -f ./inc/*.h~
 RM_SRC=rm -f ./src/*.c~
-OBJ=./obj/main.o ./obj/chat-server.o
+OBJ=./obj/main.o ./obj/server.o
 CC=cc
 LD=cl
 LINUX_FLAGS=-Werror -ggdb
@@ -32,14 +32,14 @@ OBJ_LOCATION=./obj
 SRC_LOCATION=./src
 BIN_LOCATION=./bin
 INC_LOCATION=./inc
-SRC=./src/main.c ./src/chat-server.c
+SRC=./src/main.c ./src/server.c
 MAIN=./src/main.c
 MAIN_OBJ=./obj/main.o
 SUPPORTING=./src/chat-server.c
 SUPPORTING_OBJ=./obj/chat-server.o
-STD_HEADERS=./inc/chat-server.h ../common/inc/struct.h ../common/inc/protocol.h
-EXE=./bin/chat-server
-DEBUG_EXE=./bin/chat-server-debug
+STD_HEADERS=./inc/server.h ../common/inc/struct.h ../common/inc/protocol.h
+EXE=./bin/server
+DEBUG_EXE=./bin/server-debug
 GIT_REMOTE=server
 DEBUG_LDFLAGS=-ggdb
 DEBUG_CCFLAGS=-c -g -Werror
@@ -112,14 +112,3 @@ clean :
 	$(RM_OBJ)
 	$(RM_INC)
 	$(RM_SRC)
-
-
-
-push :
-	git push origin $(GIT_REMOTE)
-
-
-
-pull :
-	git pull origin $(GIT_REMOTE)
-
