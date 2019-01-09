@@ -1,6 +1,6 @@
 /*
 *  FILE          :	protocol.h
-*  SYSTEM PROJECT:	CHAT-SYSTEM
+*  SYSTEM PROJECT:	ispeed
 *  SUB-SYSTEM	 :	
 *  PROGRAMMER    :	Arie Kraayenbrink
 *  Editors	 	 :	Arie Kraayenbrink
@@ -13,7 +13,7 @@
 
 
 /*******************************CONSTANTS*********************************************/
-#define PORT 			5000											//The port to use in communication, chosen at random.
+#define PORT 			15000											//The port to use in communication, chosen at random.
 #define BUFFER_SIZE		1024											//The size of the message array that is sent in the socket
 #define IP_SIZE			20												//Number of elements in the message array reserved for the IP address
 #define IP_START		0												//The starting element in the message array for the IP address
