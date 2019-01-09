@@ -2,14 +2,12 @@
 
 */
 
-#ifdef _WIN32
+#include "../inc/server.h"
 
-#endif
 
-#ifdef DEBUG
-	printf("%s\n", "Hello, World!");
-#endif
 
-#ifdef linux
+int main(char[] argc, int argv)
+{
 
-#endif	
+	return 0;
+}
