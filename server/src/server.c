@@ -24,7 +24,7 @@
 #include "../inc/server.h"
 
 
-int server()
+int runServer()
 {
 	int success = FAILURE;
 

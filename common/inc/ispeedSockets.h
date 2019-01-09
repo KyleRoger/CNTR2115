@@ -27,3 +27,11 @@
 #ifdef linux
 
 #endif
+
+
+
+/********PROTOTYPES*******/
+
+
+
+/********CONSTANTS*******/
