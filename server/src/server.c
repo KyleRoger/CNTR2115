@@ -31,7 +31,7 @@ int runServer()
 
 	#ifdef _WIN32
 
-	WSADATA wsaData;
+	/*WSADATA wsaData;
 
 	int iResult;
 
@@ -150,7 +150,7 @@ int runServer()
 
 	// cleanup
 	closesocket(ClientSocket);
-	WSACleanup();
+	WSACleanup();*/
 
 	#endif
 
@@ -187,7 +187,7 @@ int windowsSockets(void)
     hints.ai_flags = AI_PASSIVE;
 
     // Resolve the server address and port
-    iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
+    iResult = getaddrinfo(NULL, PORT, &hints, &result);
     if ( iResult != 0 ) {
         printf("getaddrinfo failed with error: %d\n", iResult);
         WSACleanup();

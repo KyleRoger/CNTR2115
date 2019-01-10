@@ -5,6 +5,10 @@
 /********PRE-PROCESSORS*******/
 #include <stdio.h>
 #include <stdlib.h>
+
+
+
+#ifdef linux
 #include <stdarg.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -22,3 +26,4 @@
 #include <malloc.h>
 #include <stdbool.h>
 #include <errno.h>
+#endif

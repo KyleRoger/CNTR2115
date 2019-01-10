@@ -1,15 +1,9 @@
-/*
+#include "../inc/client.h"
 
-*/
 
-#ifdef _WIN32
 
-#endif
+int main(int argc, char* argv[])
+{
 
-#ifdef DEBUG
-	printf("%s\n", "Hello, World!");
-#endif
-
-#ifdef linux
-
-#endif	
+	return runClient(argc, argv);
+}

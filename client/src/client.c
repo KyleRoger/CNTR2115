@@ -46,7 +46,7 @@ int runClient(int argc, char* argv[])
 	    hints.ai_protocol = IPPROTO_TCP;
 
 	    // Resolve the server address and port
-	    iResult = getaddrinfo(argv[1], DEFAULT_PORT, &hints, &result);
+	    iResult = getaddrinfo(argv[1], PORT, &hints, &result);
 	    if ( iResult != 0 ) {
 	        printf("getaddrinfo failed with error: %d\n", iResult);
 	        WSACleanup();

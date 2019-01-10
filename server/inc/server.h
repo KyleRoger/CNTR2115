@@ -14,6 +14,7 @@
 #include "../../common/inc/struct.h"
 #include "../../common/inc/protocol.h"
 #include "../../common/inc/ispeed.h"
+#include "../../common/inc/ispeedSockets.h"
 
 
 
