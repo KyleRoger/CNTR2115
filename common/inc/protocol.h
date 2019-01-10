@@ -23,3 +23,4 @@
 #define MESSAGE_START	(IP_SIZE + NAME_SIZE + 1)						//The starting element in the message array for the actual message
 #define TIME_SIZE		20												//Number of elements in the message array reserved for the time
 #define TIME_START		(IP_SIZE + NAME_SIZE + MESSAGE_SIZE + 1)		//The starting element in the message array for the time
+#define DEFAULT_BUFLEN 	512
