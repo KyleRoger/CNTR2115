@@ -30,6 +30,8 @@ int __cdecl windowsSockets(void);
 int newSocket(int* server_socket);
 int createSocket(void);
 int closeSocket(int server_socket);
+int readClient(dataStruct *infoStruct);
+void *socketThread(void *clientSocket);
 
 
 
