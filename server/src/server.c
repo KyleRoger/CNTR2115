@@ -90,15 +90,36 @@ int getIP(void)
     #endif
 }
 
+
+
+/*  
+*   Function Name   : runServer(void)
+*                   :
+*   Description     : This function does most of the coordinating and calls the shots.
+*                   : The basic flow of things is, create and bind to a socket, listen on that socket,
+*                   : create a thread for each new client and lastly join threads, close sockets and leave.
+*                   : 
+*   Parameters      : N/A
+*                   :
+*   Returns         : int retCode: the return value indicating the success or failure of the function
+*/
 int runServer()
 {
 	int success = FAILURE;
+    int server_socket = 0;        //This is the socket used by the server
 
-	#ifdef _WIN32
+    createSocket();
 
-	
+    /*
+    * start listening on the socket
+    */
+    if (listen (server_socket, 10) < 0) 
+    {
+        printf ("[SERVER] : listen() - FAILED.\n");        
+        success = FAILURE;
+    }
 
-	#endif
+    closeSocket(server_socket);
 
 	return success;
 }
@@ -129,16 +150,19 @@ int createSocket(void)
 
     #endif
 
+    //set up a new socket and bind to it
+    newSocket(&server_socket);
+
     return successState;
 }
 
-int closeSocket(void)
+int closeSocket(int server_socket)
 {
     int retCode = 0;
 
     #ifdef _WIN32
         // cleanup
-        closesocket(ClientSocket);
+        closesocket(server_socket);
         retCode = WSACleanup();
     #endif
 
@@ -283,68 +307,6 @@ int __cdecl windowsSockets(void)
 
 
 
-
-
-
-
-
-
-
-
-
-/*  
-*   Function Name   : runServer(void)
-*                   :
-*   Description     : This function does most of the coordinating and calls the shots.
-*                   : The basic flow of things is, create and bind to a socket, listen on that socket,
-*                   : create a thread for each new client and lastly join threads, close sockets and leave.
-*                   : 
-*   Parameters      : N/A
-*                   :
-*   Returns         : int retCode: the return value indicating the success or failure of the function
-*/
-int runServer(void)
-{
-    int retCode             = 0;        //the return value indicating the success or failure of the function
-    dataStruct clientInfo   = { 0 };    //This struct is used to hold messages sent from clients.
-    int     server_socket   = 0;        //This is the socket used by the server
-
-    //set up a new socket and bind to it
-    newSocket(&server_socket);
-
-    clientInfo.server_socket = server_socket;
-
-    /*
-    * start listening on the socket
-    */
-    if (listen (server_socket, 5) < 0) 
-    {
-        printf ("[SERVER] : listen() - FAILED.\n");
-        close (server_socket);
-        return 3;
-    }
-    
-    //check for clients
-    monitorClients(&clientInfo);
-
-    // let's go into a busy "join" loop waiting for
-    // all of the clients to finish and join back up to this main thread
-    for(int i = 0; i < numClients; i++)
-    {
-        if(pthread_join(clientInfo.clientThreadID[i], (void *)(&retCode)))
-        {
-           printf("[SERVER] : pthread_join() FAILED\n");
-           return 6;
-        }
-    }
-
-    close (server_socket);
-
-    return  retCode;
-} //end runServer function
-
-
-
 /*  
 *   Function Name   : void *socketThread(void *clientSocket)
 *                   :
@@ -474,7 +436,7 @@ int newSocket(int* server_socket)
 *                   :
 *   Returns         : int retCode: the return value indicating the success or failure of the function
 */
-int monitorClients(dataStruct *infoStruct)
+int readClient(dataStruct *infoStruct)
 {
     dataStruct* clientInfo  = (dataStruct*) infoStruct;     //A pointer to the struct that has all the client and server info.
     int     retCode         = 0;                            //The return value indicating the success or failure of the function.
