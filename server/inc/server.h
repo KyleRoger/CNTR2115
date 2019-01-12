@@ -19,9 +19,9 @@
 
 
 /********PROTOTYPES*******/
-int getIP(void);
+void getIP(void);
 int runServer();
-int windowsSockets(void);
+int __cdecl windowsSockets(void);
 
 
 
