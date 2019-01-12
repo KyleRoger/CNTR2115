@@ -19,6 +19,9 @@
 
 
 /********PROTOTYPES*******/
+int getIP(void);
+int runServer();
+int windowsSockets(void);
 
 
 
