@@ -26,7 +26,7 @@ SUPPORTING=.\src\server.c
 OBJ=$(SRC: .c=.obj)
 OBJ_MAIN=main.obj
 OBJ_SUPPORTING=server.obj
-STD_HEADERS=.\inc\server.h
+STD_HEADERS=.\inc\server.h ..\common\inc\ispeed.h ..\common\inc\ispeedSockets.h ..\common\inc\protocol.h ..\common\inc\struct.h
 EXE=.\bin\ispeed.exe
 RM=del
 
@@ -43,7 +43,7 @@ $(EXE): $(OBJ)
 main: $(MAIN) $(STD_HEADERS)
 	$(LD) $(MAIN) $(CFLAGS)
 
-guessingGame: $(SUPPORTING) $(STD_HEADERS)
+ispeed: $(SUPPORTING) $(STD_HEADERS)
 	$(LD) $(SUPPORTING) $(CFLAGS)
 	
 .c.obj:
