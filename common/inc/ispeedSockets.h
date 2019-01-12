@@ -12,13 +12,13 @@
 /********PRE-PROCESSORS*******/
 #ifdef _WIN32
 	#ifndef WIN32_LEAN_AND_MEAN
-	#define WIN32_LEAN_AND_MEAN	//disable winsock1.1 in windows.h
+		#define WIN32_LEAN_AND_MEAN	//disable winsock1.1 in windows.h
 	#endif
 
 	#include <windows.h>
 	#include <winsock2.h>
 	#include <ws2tcpip.h>
-	#include <iphlpapi.h>	//for IP Helper APIs. May not be needed...
+	#include <iphlpapi.h>	//for IP Helper APIs.
 
 	#pragma comment(lib, "Ws2_32.lib")
 #endif
@@ -29,6 +29,7 @@
 	#include <arpa/inet.h>
 	#include <netdb.h>  /* Needed for getaddrinfo() and freeaddrinfo() */
 	#include <unistd.h> /* Needed for close() */
+	#include <netinet/in.h>
 #endif
 
 

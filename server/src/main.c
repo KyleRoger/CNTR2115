@@ -8,7 +8,8 @@
 
 int main(int argc, char *argv[])
 {
+	getIP();
 
-	windowsSockets();
+	runServer();
 	return 1;
 }
