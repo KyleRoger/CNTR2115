@@ -16,10 +16,15 @@
 #include "../../common/inc/ispeed.h"
 #include "../../common/inc/ispeedSockets.h"
 
+#ifdef linux
+	#include <ifaddrs.h>
+	#include <linux/if_link.h>
+#endif
+
 
 
 /********PROTOTYPES*******/
-void getIP(void);
+int getIP(void);
 int runServer();
 int __cdecl windowsSockets(void);
 

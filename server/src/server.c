@@ -25,7 +25,7 @@
 
 #undef UNICODE
 
-void getIP(void)
+int getIP(void)
 {
 
     /*struct ifaddrs *id;
@@ -38,7 +38,55 @@ void getIP(void)
     return 0;*/
 
     #ifdef _WIN32
-    system("ipconfig | findstr IPv4");
+        system("ipconfig | findstr IPv4");  //Credit: https://stackoverflow.com/questions/49216004/c-programming-getting-windows-ip-address
+    #endif
+
+    #ifdef linux
+        //Credit: http://man7.org/linux/man-pages/man3/getifaddrs.3.html
+        /*struct ifaddrs *ifaddr, *ifa;
+        int family, s, n;
+        char host[NI_MAXHOST];
+
+        if (getifaddrs(&ifaddr) == -1) {
+           perror("getifaddrs");
+           exit(EXIT_FAILURE);
+        }*/
+
+        /* Walk through linked list, maintaining head pointer so we
+          can free list later */
+
+        /*for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
+           if (ifa->ifa_addr == NULL)
+               continue;
+
+           family = ifa->ifa_addr->sa_family;
+
+           /* For an AF_INET* interface address, display the address */
+
+           /*if (family == AF_INET || family == AF_INET6) {
+               s = getnameinfo(ifa->ifa_addr,
+                       (family == AF_INET) ? sizeof(struct sockaddr_in) :
+                                             sizeof(struct sockaddr_in6),
+                       host, NI_MAXHOST,
+                       NULL, 0, NI_NUMERICHOST);
+               if (s != 0) {
+                   printf("getnameinfo() failed: %s\n", gai_strerror(s));
+                   exit(EXIT_FAILURE);
+               }
+
+               printf("\t\taddress: <%s>\n", host);
+           } 
+        }
+
+        freeifaddrs(ifaddr);
+        exit(EXIT_SUCCESS);*/
+
+        //Credit: https://forgetcode.com/c/1483-program-to-get-the-ip-address
+        struct ifaddrs *id;
+        int val;
+        val = getifaddrs(&id);
+        printf("Network Interface Name :- %s\n",id->ifa_name);
+        printf("Network Address of %s :- %d\n",id->ifa_name,id->ifa_addr);
     #endif
 }
 
@@ -56,6 +104,50 @@ int runServer()
 }
 
 
+
+int createSocket(void)
+{
+    int result = 0;
+    int successState = FAILURE;
+
+    #ifdef _WIN32
+        WSADATA wsaData;
+        result = WSAStartup(MAKEWORD(2,2), &wsaData);
+
+        if (result != 0) 
+        {
+            printf("WSAStartup failed with error: %d\n", result);
+            successState = FAILURE;
+        }
+        else
+        {
+            successState = SUCCESS;
+        }
+    #endif
+
+    #ifdef linux
+
+    #endif
+
+    return successState;
+}
+
+int closeSocket(void)
+{
+    int retCode = 0;
+
+    #ifdef _WIN32
+        // cleanup
+        closesocket(ClientSocket);
+        retCode = WSACleanup();
+    #endif
+
+    #ifdef linux
+
+    #endif
+
+        return retCode;
+}
 
 int __cdecl windowsSockets(void) 
 {
@@ -177,3 +269,231 @@ int __cdecl windowsSockets(void)
 
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*  
+*   Function Name   : runServer(void)
+*                   :
+*   Description     : This function does most of the coordinating and calls the shots.
+*                   : The basic flow of things is, create and bind to a socket, listen on that socket,
+*                   : create a thread for each new client and lastly join threads, close sockets and leave.
+*                   : 
+*   Parameters      : N/A
+*                   :
+*   Returns         : int retCode: the return value indicating the success or failure of the function
+*/
+int runServer(void)
+{
+    int retCode             = 0;        //the return value indicating the success or failure of the function
+    dataStruct clientInfo   = { 0 };    //This struct is used to hold messages sent from clients.
+    int     server_socket   = 0;        //This is the socket used by the server
+
+    //set up a new socket and bind to it
+    newSocket(&server_socket);
+
+    clientInfo.server_socket = server_socket;
+
+    /*
+    * start listening on the socket
+    */
+    if (listen (server_socket, 5) < 0) 
+    {
+        printf ("[SERVER] : listen() - FAILED.\n");
+        close (server_socket);
+        return 3;
+    }
+    
+    //check for clients
+    monitorClients(&clientInfo);
+
+    // let's go into a busy "join" loop waiting for
+    // all of the clients to finish and join back up to this main thread
+    for(int i = 0; i < numClients; i++)
+    {
+        if(pthread_join(clientInfo.clientThreadID[i], (void *)(&retCode)))
+        {
+           printf("[SERVER] : pthread_join() FAILED\n");
+           return 6;
+        }
+    }
+
+    close (server_socket);
+
+    return  retCode;
+} //end runServer function
+
+
+
+/*  
+*   Function Name   : void *socketThread(void *clientSocket)
+*                   :
+*   Description     : This function is a separate thread that is created for each client. It checks for incoming messages
+*                   : from the client and then calls a function to broadcast that message to all other clients.
+*                   : 
+*   Parameters      : void *clientSocket : A void pointer to the struct that has all the client and server information
+*                   : as well as the struct used in our communication protocol.
+*                   :
+*   Returns         : int retCode: the return value indicating the success or failure of the function
+*/
+void *socketThread(void *clientSocket)
+{
+  dataStruct* clientInfo = (dataStruct*) clientSocket;
+  int cID = clientInfo->clientID[numClients - 1];   //Used for tracking the clients ID
+  int clSocket = clientInfo->client_socket[cID - 1];
+
+  clientInfo->clientCount++;    //Track number of clients
+
+  //read in the message from the client
+  read (clSocket, &clientInfo->clientMessage[cID - 1], sizeof(clientInfo->clientMessage));
+
+  clientInfo->client_socket[cID - 1] = clSocket;
+  int done = 1;
+
+  //loop till client enters >>bye<<
+  while((done = strcmp(clientInfo->clientMessage[cID - 1].message,">>bye<<")) != 0)
+  {
+    
+    if (done != 0)
+    {
+        //broadcast struct to all clients
+        broadcastMSG(clientInfo, cID);
+    }
+    else
+    {
+        break;
+    }
+    
+    //read in the message from the client
+    read (clSocket, &clientInfo->clientMessage[cID - 1], sizeof(clientInfo->clientMessage));
+    
+  }
+  
+  // decrement the number of clients
+  numClients--;
+
+  if (numClients == 0)
+  {
+    //clean up the struct
+    removeClient(clientInfo, cID);
+
+    //shut server down
+    close(clSocket);
+    close (clientInfo->server_socket);
+
+    signal( SIGALRM, handle_alarm ); // Install handler first
+    kill(getpid(), SIGALRM);
+  }
+  else
+  {
+    //clean up the struct
+    removeClient(clientInfo, cID);
+    close(clSocket);
+  }
+    
+  return 0;
+}
+
+
+
+/*  
+*   Function Name   : newSocket(int* server_socket)
+*                   :
+*   Description     : This function sets up and binds to a socket. If theres is any problems doing this, 
+*                   : an error is printed to the screen.
+*                   : 
+*   Parameters      : int* server_socket : The socket that is about to be set up. It will be used by the server.
+*                   :
+*   Returns         : int retCode: the return value indicating the success or failure of the function
+*/
+int newSocket(int* server_socket)
+{
+    int retCode = 0;        //the return value indicating the success or failure of the function
+
+#ifdef linux
+    struct sockaddr_in server_addr;     //A struct used for the socket information.
+
+    //set up socket
+    if ((*server_socket = socket (AF_INET, SOCK_STREAM, 0)) < 0) 
+    {
+        printf ("[SERVER] : socket() FAILED. \nErrno returned %i\n", errno);
+        retCode = -1;
+    }
+    else
+    {
+        //bind to socket
+        memset (&server_addr, 0, sizeof (server_addr));
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_addr.s_addr = htonl (INADDR_ANY);
+        server_addr.sin_port = htons (PORT);
+
+        if (bind (*server_socket, (struct sockaddr *)&server_addr, sizeof (server_addr)) < 0) 
+        {
+            printf ("[SERVER] : bind() FAILED. \nErrno returned %i\n", errno);
+            close (*server_socket);
+            retCode = -2;
+        }
+
+    }
+#endif
+
+    return retCode;
+} //end newSocket function
+
+
+
+/*  
+*   Function Name   : int monitorClients(void *clientSocket)
+*                   :
+*   Description     : This function looks for new sockets that indicate a client wants to attach to the server.
+*                   : It loops till the number of clients decrees to zero or it get killed. After picking up a
+*                   : new client, it creates a thread for that client so the server can handle messages from it.
+*                   : 
+*   Parameters      : void *infoStruct : This is the struct that has all the data for the client and server.
+*                   : It also holds another struct that is used for sending messages back and forth.
+*                   :
+*   Returns         : int retCode: the return value indicating the success or failure of the function
+*/
+int monitorClients(dataStruct *infoStruct)
+{
+    dataStruct* clientInfo  = (dataStruct*) infoStruct;     //A pointer to the struct that has all the client and server info.
+    int     retCode         = 0;                            //The return value indicating the success or failure of the function.
+    int     client_socket   = 0;                            //The client's socket, set by the accept call.
+    int     client_len      = 0;                            //The size of the client_addr struct.
+    int     server_socket   = clientInfo->server_socket;    //The server's socket.
+    struct  sockaddr_in client_addr;                        //Struct with details about client socket.
+    
+    /*
+    * accept a packet from the client.
+    * this is a blocking operation.
+    */
+    client_len = sizeof (client_addr);
+    if ((client_socket = accept (server_socket,(struct sockaddr *)&client_addr, &client_len)) < 0) 
+    {
+          printf ("[SERVER] : accept() FAILED\n");
+          fflush(stdout);   
+          break;
+    }
+
+    return retCode;
+} //end monitorClients function
