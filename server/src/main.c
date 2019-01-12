@@ -9,5 +9,6 @@
 int main(int argc, char *argv[])
 {
 
-	return windowsSockets();
+	windowsSockets();
+	return 1;
 }
