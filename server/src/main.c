@@ -8,8 +8,5 @@
 
 int main(int argc, char *argv[])
 {
-	getIP();
-
-	runServer();
-	return 1;
+	return runServer(argc, argv);
 }

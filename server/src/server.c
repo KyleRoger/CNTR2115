@@ -25,6 +25,9 @@
 
 #undef UNICODE
 
+static int numClients = 0;  //used to track the number of clients attached.
+
+
 
 /*  
 *   Function Name   : getIP(void)
@@ -84,7 +87,7 @@ void getIP(void)
                        break;
                    }
 
-                   printf("\t\taddress: <%s>\n", host);
+                   printf("address: <%s>\n", host);
                } 
             }
 
@@ -106,40 +109,74 @@ void getIP(void)
 *                   :
 *   Returns         : int retCode: the return value indicating the success or failure of the function
 */
-int runServer()
+int runServer(int argc, char *argv[])
 {
 	int success = FAILURE;
     int server_socket = 0;          //This is the socket used by the server
     int client_socket = 0;          //the client socket ID
-
+    dataStruct clientInfo   = { 0 };    //This struct is used to hold messages sent from clients.
+    int sockPort = 0;
+    int sockType = SOCK_STREAM;
     char buffer[BUFSIZ];            // used for accepting incoming command and also holding the command's response
 
-    createSocket(&server_socket);
+    getIP();
+
+    parseCmdLine();
+
+    #ifdef _WIN32
+        initSocket();
+    #endif
+
+    //set up a new socket and bind to it
+    newSocket(&server_socket, sockType, sockPort);
+
+    clientInfo.server_socket = server_socket;
 
     /*
     * start listening on the socket
     */
     if (listen (server_socket, 10) < 0) 
     {
-        printf ("[SERVER] : listen() - FAILED.\n");        
+        printf ("[SERVER] : listen() - FAILED.\n");     
+        close (server_socket);   
         success = FAILURE;
     }
 
-    closeSocket(server_socket);
+    //check for clients
+    monitorClients(&clientInfo);
+
+    #ifdef _WIN32
+        // cleanup
+        closesocket(server_socket);
+        success = WSACleanup();
+    #endif
+
+    #ifdef linux
+        //shut server down
+        close(server_socket);
+    #endif
 
 	return success;
 }
 
-
-
-int createSocket(int* server_socket)
+int parseCmdLine()
 {
-    int result = 0;
+
+    return 0;
+}
+
+int initSocket(void)
+{
+
     int successState = FAILURE;
 
+    // Initialze winsock
     #ifdef _WIN32
         WSADATA wsaData;
-        result = WSAStartup(MAKEWORD(2,2), &wsaData);
+        //result = WSAStartup(MAKEWORD(2,2), &wsaData);
+        WORD ver = MAKEWORD(2, 2);
+
+        int result = WSAStartup(ver, &wsaData);
 
         if (result != 0) 
         {
@@ -148,35 +185,109 @@ int createSocket(int* server_socket)
         }
         else
         {
+            printf("%s\n", "Winsock initialized"); 
             successState = SUCCESS;
-        }`
+        }
     #endif
+
+
+
+/*
+    // Create a socket
+    #ifdef _WIN32
+        SOCKET serverSocket = socket(AF_INET, socketType, 0);
+    #endif
+
+    #ifdef linux
+        int serverSocket = socket(AF_INET, socketType, 0);
+    #endif
+
+    if (serverSocket == INVALID_SOCKET)
+    {
+        printf ("[SERVER] : socket() FAILED. \nErrno returned %i\n", errno);
+        successState = FAILURE;
+        #ifdef _WIN32
+            WSACleanup();
+        #endif
+    }
+    
+
+
+
+    // Bind ip to socket
+    socketaddr_in hint;
+    hint.sin_family = AF_INET;
+    hint.sin_port = htons(socketPort);
+    //inet_pton(AF_INET, ipAddress, &hint.sin_addr);
+    //inet_pton(AF_INET, "0.0.0.0", &hint.sin_addr);
+    hint.sin_addr.s_un.s_addr = INADDR_ANY;
+
+    bind (serverSocket, (sockaddr*)&hint, sizeof(hint));
+
+    // Tell winsock the socket is for listening
+    listen(serverSocket, SOMAXCONN);
+
+    // Wait for a connection 
+    sockaddr_in client;
+    int clientSize = sizeof(client);
+    //socklen_t clientSize = sizeof(client);
+
+    socket clientSocket = accept (serverSocket, (sockaddr*)&client, &clientSize);
+
+    if (clientSocket == INVALID_SOCKET)
+    {
+
+    }
+
+    char host[NI_MAXHOST]       // client's remote name
+    char service[NI_MAXHOST];   // Servic (i.e. port) the client is connected on
+
+    ZeroMemory(host, NI_MAXHOST); 
+    ZeroMemory(service, NI_MAXHOST);
+
+    if (getnameinfo((sockaddr*)&client, sizeof(client), host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0)
+    {
+        printf("%s %i\n", "Connected on port: ", service);
+    }
+    else
+    {
+        inet_ntop(AF_INET, &client.sin_addr, host, NI_MAXHOST);
+        printf("%s %i\n", "Connected on post: ", ntohs(client.sin_port));
+    }
+    // Close listening socket
+    closesocket(serverSocket);
+
+    // While loop: accept messages from client
+
+    // close the socket
+
+    // Shutdown winsock*/
+
+
+    
 
     #ifdef linux
 
     #endif
 
-    //set up a new socket and bind to it
-    newSocket(server_socket);
-
     return successState;
 }
 
-int closeSocket(int server_socket)
+int closeSocket(int clSocket)
 {
     int retCode = 0;
 
     #ifdef _WIN32
         // cleanup
-        closesocket(server_socket);
-        retCode = WSACleanup();
+        closesocket(clSocket);
     #endif
 
     #ifdef linux
-
+        //shut server down
+        close(clSocket);
     #endif
 
-        return retCode;
+    return retCode;
 }
 
 #ifdef _WIN32
@@ -304,55 +415,70 @@ int __cdecl windowsSockets(void)
 
 
 
-
-
-
-
-
-
-
-
-
-
 /*  
-*   Function Name   : void *socketThread(void *clientSocket)
+*   Function Name   : int monitorClients(void *clientSocket)
 *                   :
-*   Description     : This function is a separate thread that is created for each client. It checks for incoming messages
-*                   : from the client and then calls a function to broadcast that message to all other clients.
+*   Description     : This function looks for new sockets that indicate a client wants to attach to the server.
+*                   : It loops till the number of clients decrees to zero or it get killed. After picking up a
+*                   : new client, it creates a thread for that client so the server can handle messages from it.
 *                   : 
-*   Parameters      : void *clientSocket : A void pointer to the struct that has all the client and server information
-*                   : as well as the struct used in our communication protocol.
+*   Parameters      : void *infoStruct : This is the struct that has all the data for the client and server.
+*                   : It also holds another struct that is used for sending messages back and forth.
 *                   :
 *   Returns         : int retCode: the return value indicating the success or failure of the function
 */
-void *socketThread(void *clientSocket)
+int monitorClients(dataStruct *infoStruct)
 {
-  dataStruct* clientInfo = (dataStruct*) clientSocket;
-  int clSocket = clientInfo->client_socket;
+    dataStruct* clientInfo  = (dataStruct*) infoStruct;     //A pointer to the struct that has all the client and server info.
+    int     retCode         = 0;                            //The return value indicating the success or failure of the function.
+    int     client_socket   = 0;                            //The client's socket, set by the accept call.
+    int     client_len      = 0;                            //The size of the client_addr struct.
+    int     server_socket   = clientInfo->server_socket;    //The server's socket.
+    struct  sockaddr_in client_addr;                        //Struct with details about client socket.
 
-  //read in the message from the client
-  read (clSocket, &clientInfo->clientMessage, sizeof(clientInfo->clientMessage));
+    if (numClients <= MAX_CLIENTS) //do nothing for new clients well we have the max clients attached.
+    {
 
-  clientInfo->client_socket = clSocket;
-  int done = 1;
+        /*
+        * accept a packet from the client.
+        * this is a blocking operation.
+        */
+        client_len = sizeof (client_addr);
+        if ((client_socket = accept (server_socket,(struct sockaddr *)&client_addr, &client_len)) < 0) 
+        {
+              printf ("[SERVER] : accept() FAILED\n");
+              fflush(stdout);   
+        }
 
-  //loop till client enters >>bye<<
-  while((done = strcmp(clientInfo->clientMessage.message,">>bye<<")) != 0)
-  {
-    
-    
-    
+        //track clients
+        numClients++;
+        clientInfo->client_socket = client_socket;
+                    
+    } 
+    else
+    {
+        printf ("Error, reached max number of supported clients.\n");
+    }
+
+    int clSocket = clientInfo->client_socket;
+
     //read in the message from the client
     read (clSocket, &clientInfo->clientMessage, sizeof(clientInfo->clientMessage));
-    
-  }
-  
-    //shut server down
-    /*close(clSocket);
-    close (clientInfo->server_socket);*/
-    
-  return 0;
-}
+
+    clientInfo->client_socket = clSocket;
+    int done = 1;
+
+    //loop till client enters >>bye<<
+    while((done = strcmp(clientInfo->clientMessage.message,">>bye<<")) != 0)
+    {
+        
+    //read in the message from the client
+    read (clSocket, &clientInfo->clientMessage, sizeof(clientInfo->clientMessage));
+
+    }
+
+    return retCode;
+} //end monitorClients function
 
 
 
@@ -366,19 +492,13 @@ void *socketThread(void *clientSocket)
 *                   :
 *   Returns         : int retCode: the return value indicating the success or failure of the function
 */
-int newSocket(int* server_socket)
+int newSocket(int* server_socket, int sockType, int sockPort)
 {
     int retCode = 0;        //the return value indicating the success or failure of the function
-
-#ifdef _WIN32
-    
-#endif
-
-#ifdef linux
     struct sockaddr_in server_addr;     //A struct used for the socket information.
 
     //set up socket
-    if ((*server_socket = socket (AF_INET, SOCK_STREAM, 0)) < 0) 
+    if ((*server_socket = socket (AF_INET, sockType, 0)) < 0) 
     {
         printf ("[SERVER] : socket() FAILED. \nErrno returned %i\n", errno);
         retCode = -1;
@@ -389,7 +509,7 @@ int newSocket(int* server_socket)
         memset (&server_addr, 0, sizeof (server_addr));
         server_addr.sin_family = AF_INET;
         server_addr.sin_addr.s_addr = htonl (INADDR_ANY);
-        server_addr.sin_port = htons (PORT);
+        server_addr.sin_port = htons (sockPort);
 
         if (bind (*server_socket, (struct sockaddr *)&server_addr, sizeof (server_addr)) < 0) 
         {
@@ -399,7 +519,6 @@ int newSocket(int* server_socket)
         }
 
     }
-#endif
 
     return retCode;
 } //end newSocket function

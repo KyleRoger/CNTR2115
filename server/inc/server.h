@@ -34,15 +34,17 @@ typedef struct dataStruct
 
 /********PROTOTYPES*******/
 void getIP(void);
-int runServer();
+int runServer(int argc, char *argv[]);
 #ifdef _WIN32
 int __cdecl windowsSockets(void);
 #endif
-int newSocket(int* server_socket);
-int createSocket(int* server_socket);
+int newSocket(int* server_socket, int sockType, int sockPort);
+int intSocket(void);
 int closeSocket(int server_socket);
 int readClient(dataStruct *infoStruct);
 void *socketThread(void *clientSocket);
+int parseCmdLine();
+int monitorClients(dataStruct *infoStruct);
 
 
 

@@ -17,7 +17,7 @@
 
 
 /*******************************CONSTANTS*********************************************/
-#define MAX_CLIENTS		10		//The max number of clients that are supported at a time
+#define MAX_CLIENTS		1		//The max number of clients that are supported at a time
 #define NAME_LENGTH		5		//The max number of chars that a name can have.
 #define MSG_SIZE		80		//The max number of chars that the message may have.
 #define IP_LENGTH		16		//The length of the IP address

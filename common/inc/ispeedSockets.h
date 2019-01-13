@@ -39,3 +39,6 @@
 
 
 /********CONSTANTS*******/
+#ifdef linux
+	#define INVALID_SOCKET "-1"
+#endif
