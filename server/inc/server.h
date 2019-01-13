@@ -40,7 +40,7 @@ int runServer();
 int __cdecl windowsSockets(void);
 #endif
 int newSocket(int* server_socket);
-int createSocket(int server_socket);
+int createSocket(int* server_socket);
 int closeSocket(int server_socket);
 int readClient(dataStruct *infoStruct);
 void *socketThread(void *clientSocket);

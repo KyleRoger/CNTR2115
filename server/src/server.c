@@ -110,7 +110,7 @@ int runServer()
 	int success = FAILURE;
     int server_socket = 0;        //This is the socket used by the server
 
-    createSocket(server_socket);
+    createSocket(&server_socket);
 
     /*
     * start listening on the socket
@@ -128,7 +128,7 @@ int runServer()
 
 
 
-int createSocket(int server_socket)
+int createSocket(int* server_socket)
 {
     int result = 0;
     int successState = FAILURE;
@@ -153,7 +153,7 @@ int createSocket(int server_socket)
     #endif
 
     //set up a new socket and bind to it
-    newSocket(&server_socket);
+    newSocket(server_socket);
 
     return successState;
 }
