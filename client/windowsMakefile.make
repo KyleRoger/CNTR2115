@@ -43,7 +43,7 @@ $(EXE): $(OBJ)
 main: $(MAIN) $(STD_HEADERS)
 	$(LD) $(MAIN) $(CFLAGS)
 
-guessingGame: $(SUPPORTING) $(STD_HEADERS)
+ispeed: $(SUPPORTING) $(STD_HEADERS)
 	$(LD) $(SUPPORTING) $(CFLAGS)
 	
 .c.obj:
