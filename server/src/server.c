@@ -43,19 +43,19 @@ int getIP(void)
 
     #ifdef linux
         //Credit: http://man7.org/linux/man-pages/man3/getifaddrs.3.html
-        /*struct ifaddrs *ifaddr, *ifa;
+        struct ifaddrs *ifaddr, *ifa;
         int family, s, n;
         char host[NI_MAXHOST];
 
         if (getifaddrs(&ifaddr) == -1) {
            perror("getifaddrs");
            exit(EXIT_FAILURE);
-        }*/
+        }
 
         /* Walk through linked list, maintaining head pointer so we
           can free list later */
 
-        /*for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
+        for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
            if (ifa->ifa_addr == NULL)
                continue;
 
@@ -63,7 +63,7 @@ int getIP(void)
 
            /* For an AF_INET* interface address, display the address */
 
-           /*if (family == AF_INET || family == AF_INET6) {
+           if (family == AF_INET) {
                s = getnameinfo(ifa->ifa_addr,
                        (family == AF_INET) ? sizeof(struct sockaddr_in) :
                                              sizeof(struct sockaddr_in6),
@@ -79,14 +79,14 @@ int getIP(void)
         }
 
         freeifaddrs(ifaddr);
-        exit(EXIT_SUCCESS);*/
+        // exit(EXIT_SUCCESS);
 
         //Credit: https://forgetcode.com/c/1483-program-to-get-the-ip-address
-        struct ifaddrs *id;
+        /*struct ifaddrs *id;
         int val;
         val = getifaddrs(&id);
         printf("Network Interface Name :- %s\n",id->ifa_name);
-        printf("Network Address of %s :- %d\n",id->ifa_name,id->ifa_addr);
+        printf("Network Address of %s :- %d\n",id->ifa_name,id->ifa_addr);*/
     #endif
 
     return 0;
