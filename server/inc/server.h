@@ -26,7 +26,6 @@
 typedef struct dataStruct
 {
 	int server_socket;				//the server socket ID
-	int clientCount;				//number of clients
 	int client_socket;				//the client socket ID
 	msgStruct clientMessage;		//the struct containing the clients details and message. - in struct.h
 }dataStruct;
@@ -34,7 +33,7 @@ typedef struct dataStruct
 
 
 /********PROTOTYPES*******/
-int getIP(void);
+void getIP(void);
 int runServer();
 #ifdef _WIN32
 int __cdecl windowsSockets(void);

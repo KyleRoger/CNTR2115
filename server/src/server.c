@@ -25,7 +25,17 @@
 
 #undef UNICODE
 
-int getIP(void)
+
+/*  
+*   Function Name   : getIP(void)
+*                   :
+*   Description     : This function gets the IP address of the computer.
+*                   : 
+*   Parameters      : N/A
+*                   :
+*   Returns         : N/A
+*/
+void getIP(void)
 {
 
     /*struct ifaddrs *id;
@@ -49,47 +59,38 @@ int getIP(void)
 
         if (getifaddrs(&ifaddr) == -1) {
            perror("getifaddrs");
-           exit(EXIT_FAILURE);
         }
+        else
+        {
+            /* Walk through linked list, maintaining head pointer so we
+              can free list later */
 
-        /* Walk through linked list, maintaining head pointer so we
-          can free list later */
+            for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
+               if (ifa->ifa_addr == NULL)
+                   continue;
 
-        for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
-           if (ifa->ifa_addr == NULL)
-               continue;
+               family = ifa->ifa_addr->sa_family;
 
-           family = ifa->ifa_addr->sa_family;
+               /* For an AF_INET* interface address, display the address */
 
-           /* For an AF_INET* interface address, display the address */
+               if (family == AF_INET) {
+                   s = getnameinfo(ifa->ifa_addr,
+                           (family == AF_INET) ? sizeof(struct sockaddr_in) :
+                                                 sizeof(struct sockaddr_in6),
+                           host, NI_MAXHOST,
+                           NULL, 0, NI_NUMERICHOST);
+                   if (s != 0) {
+                       printf("getnameinfo() failed: %s\n", gai_strerror(s));
+                       break;
+                   }
 
-           if (family == AF_INET) {
-               s = getnameinfo(ifa->ifa_addr,
-                       (family == AF_INET) ? sizeof(struct sockaddr_in) :
-                                             sizeof(struct sockaddr_in6),
-                       host, NI_MAXHOST,
-                       NULL, 0, NI_NUMERICHOST);
-               if (s != 0) {
-                   printf("getnameinfo() failed: %s\n", gai_strerror(s));
-                   exit(EXIT_FAILURE);
-               }
+                   printf("\t\taddress: <%s>\n", host);
+               } 
+            }
 
-               printf("\t\taddress: <%s>\n", host);
-           } 
+            freeifaddrs(ifaddr);
         }
-
-        freeifaddrs(ifaddr);
-        // exit(EXIT_SUCCESS);
-
-        //Credit: https://forgetcode.com/c/1483-program-to-get-the-ip-address
-        /*struct ifaddrs *id;
-        int val;
-        val = getifaddrs(&id);
-        printf("Network Interface Name :- %s\n",id->ifa_name);
-        printf("Network Address of %s :- %d\n",id->ifa_name,id->ifa_addr);*/
     #endif
-
-    return 0;
 }
 
 
@@ -108,7 +109,10 @@ int getIP(void)
 int runServer()
 {
 	int success = FAILURE;
-    int server_socket = 0;        //This is the socket used by the server
+    int server_socket = 0;          //This is the socket used by the server
+    int client_socket = 0;          //the client socket ID
+
+    char buffer[BUFSIZ];            // used for accepting incoming command and also holding the command's response
 
     createSocket(&server_socket);
 
@@ -145,7 +149,7 @@ int createSocket(int* server_socket)
         else
         {
             successState = SUCCESS;
-        }
+        }`
     #endif
 
     #ifdef linux
@@ -365,6 +369,10 @@ void *socketThread(void *clientSocket)
 int newSocket(int* server_socket)
 {
     int retCode = 0;        //the return value indicating the success or failure of the function
+
+#ifdef _WIN32
+    
+#endif
 
 #ifdef linux
     struct sockaddr_in server_addr;     //A struct used for the socket information.
