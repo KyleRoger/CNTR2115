@@ -6,121 +6,110 @@
 
 int runClient(int argc, char* argv[])
 {
+unsigned short port = DEFAULT_PORT;
+	int retval = 0;
+	char * buffer = NULL;
+	int totalSize = 0;
+	int amountOfPackage = 0;
+	unsigned int addr;
+	struct sockaddr_in server;
 
-	char byte1000[1000] = "";
-	char byte2000[2000] = "";
-	char byte5000[5000] = "";
-	char byte10000[10000] = "";
+#ifdef _WIN32
+	WSADATA wsaData;
+	SOCKET  conn_socket;
+#endif
+	
+	char buffer1000[1000] = "";
+	char buffer2000[2000] = "";
+	char buffer5000[5000] = "";
+	char buffer10000[10000] = "";
 	if (argc != 4)
 	{
-		printf("Incorrect Number of Arguments.\n");
+		printf("Not correct amount of Agruments");
 	}
 	else
 	{
-	    WSADATA wsaData;
-	    SOCKET ConnectSocket = INVALID_SOCKET;
-	    struct addrinfo *result = NULL,
-	                    *ptr = NULL,
-	                    hints;
-	    char *sendbuf = "this is a test";
-	    char recvbuf[DEFAULT_BUFLEN];
-	    int iResult;
-	    int recvbuflen = DEFAULT_BUFLEN;
-	    
-	    // Validate the parameters
-	    if (argc != 2) {
-	        printf("usage: %s server-name\n", argv[0]);
-	        return 1;
-	    }
+#ifdef _WIN32
+		if ((retval = WSAStartup(0x202, &wsaData)) != 0) {
+			printf("WSAStartup failed with error\n");
+			WSACleanup();
+		}
+		else
+#endif
+		{
+			
+			server.sin_family = AF_INET;
+			server.sin_port = htons(port);
+			server.sin_addr.s_addr = inet_addr(argv[1]);
 
-	    // Initialize Winsock
-	    iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
-	    if (iResult != 0) {
-	        printf("WSAStartup failed with error: %d\n", iResult);
-	        return 1;
-	    }
+			conn_socket = socket(AF_INET, SOCK_STREAM, 0); 
+			if (conn_socket < 0) {
+				printf("Client: Error Opening socket: Error\n");
+#ifdef _WIN32				
+				WSACleanup();
+#endif
+			}
 
-	    ZeroMemory( &hints, sizeof(hints) );
-	    hints.ai_family = AF_UNSPEC;
-	    hints.ai_socktype = SOCK_STREAM;
-	    hints.ai_protocol = IPPROTO_TCP;
+			else
+			{
+				if (connect(conn_socket, (struct sockaddr*)&server, sizeof(server)) < 0) {
+					printf("connect() failed: \n");
+#ifdef _WIN32									
+					WSACleanup();
+#endif			
+				}
 
-	    // Resolve the server address and port
-	    iResult = getaddrinfo(argv[1], PORT, &hints, &result);
-	    if ( iResult != 0 ) {
-	        printf("getaddrinfo failed with error: %d\n", iResult);
-	        WSACleanup();
-	        return 1;
-	    }
+				totalSize = atoi(argv[2]);
 
-	    // Attempt to connect to an address until one succeeds
-	    for(ptr=result; ptr != NULL ;ptr=ptr->ai_next) {
+				if (totalSize == 1000)
+				{
+					buffer = buffer1000;
+				}
+				else if (totalSize == 2000)
+				{
+					buffer = buffer2000;
 
-	        // Create a SOCKET for connecting to server
-	        ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype, 
-	            ptr->ai_protocol);
-	        if (ConnectSocket == INVALID_SOCKET) {
-	            printf("socket failed with error: %ld\n", WSAGetLastError());
-	            WSACleanup();
-	            return 1;
-	        }
+				}
+				else if (totalSize == 5000)
+				{
+					buffer = buffer5000;
+				}
+				else if (totalSize == 10000)
+				{
+					buffer = buffer1000;
+				}
 
-	        // Connect to server.
-	        iResult = connect( ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
-	        if (iResult == SOCKET_ERROR) {
-	            closesocket(ConnectSocket);
-	            ConnectSocket = INVALID_SOCKET;
-	            continue;
-	        }
-	        break;
-	    }
+				amountOfPackage = atoi(argv[3]);
+				if ((amountOfPackage == 0) || (amountOfPackage > 1000000))
+				{
+					printf("Number is invalid number\n");
+				}
+				else
+				{
+					int i = 0;
+					//loop base on the thrid agrument
+					for (; i < amountOfPackage; i++)
+					{
+						sprintf(buffer, "%d", i);
+						retval = send(conn_socket, buffer, totalSize, 0);
+						//check to see if it was sent sucessfully
+						if (retval < 0) {
+							printf("send() failed: error %d\n", i);
+#ifdef _WIN32					
+							WSACleanup();
+#endif					
+							break;
 
-	    freeaddrinfo(result);
-
-	    if (ConnectSocket == INVALID_SOCKET) {
-	        printf("Unable to connect to server!\n");
-	        WSACleanup();
-	        return 1;
-	    }
-
-	    // Send an initial buffer
-	    iResult = send( ConnectSocket, sendbuf, (int)strlen(sendbuf), 0 );
-	    if (iResult == SOCKET_ERROR) {
-	        printf("send failed with error: %d\n", WSAGetLastError());
-	        closesocket(ConnectSocket);
-	        WSACleanup();
-	        return 1;
-	    }
-
-	    printf("Bytes Sent: %ld\n", iResult);
-
-	    // shutdown the connection since no more data will be sent
-	    iResult = shutdown(ConnectSocket, SD_SEND);
-	    if (iResult == SOCKET_ERROR) {
-	        printf("shutdown failed with error: %d\n", WSAGetLastError());
-	        closesocket(ConnectSocket);
-	        WSACleanup();
-	        return 1;
-	    }
-
-	    // Receive until the peer closes the connection
-	    do {
-
-	        iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-	        if ( iResult > 0 )
-	            printf("Bytes received: %d\n", iResult);
-	        else if ( iResult == 0 )
-	            printf("Connection closed\n");
-	        else
-	            printf("recv failed with error: %d\n", WSAGetLastError());
-
-	    } while( iResult > 0 );
-
-	    // cleanup
-	    closesocket(ConnectSocket);
-	    WSACleanup();
-
-	    return 0;
+						}
+						memset(buffer, 0, totalSize);
+					}
+#ifdef _WIN32
+					closesocket(conn_socket);
+					WSACleanup();
+#endif
+				}
+			}
+		}
 	}
 }
 

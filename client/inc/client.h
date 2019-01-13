@@ -15,6 +15,12 @@
 #include "../../common/inc/protocol.h"
 #include "../../common/inc/ispeed.h"
 #include "../../common/inc/ispeedSockets.h"
+#define WIN32_LEAN_AND_MEAN
+#include <winsock2.h>
+#include <Ws2tcpip.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 
 
 
@@ -25,3 +31,4 @@
 /********CONSTANTS*******/
 #define SUCCESS 1
 #define FAILURE 0
+#define DEFAULT_PORT 1919
