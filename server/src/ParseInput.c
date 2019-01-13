@@ -40,22 +40,17 @@ int parseCmdLine(int argc, char** argv, char* inputFileName, char* outputFileNam
 
 	int retCode = 0; //return code to let calling function know what to do.
 	int i = 0;
-	int filenameLocation = 0;
 	
-	//check if help was requested
+	//check if
 	for (int i = 0; i < argc; i++)
 	{
-		if (argv[i][0] == '-' && argv[i][1] == 'h' && argv[i][2] == '\0') //look for a -h switch
+		if (argv[i][0] == '-' && argv[i][1] == 'p' && argv[i][2] == '\0') //look for a -p switch
 		{
-			#ifdef DISPLAY_MSG
-			printf("Help message requested\n");
-			printf("currently, i is %i and argc is %i\n", i, argc);
-			#endif
 
-			flags.hFlag = USED;
+			int port = argv[2];
 		
 			//finished checking
-			retCode = HELP_MSG;
+			retCode = 1
 			i = argc + 1; 
 		}	
 		
