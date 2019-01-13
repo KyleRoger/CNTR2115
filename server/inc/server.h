@@ -36,7 +36,9 @@ typedef struct dataStruct
 /********PROTOTYPES*******/
 int getIP(void);
 int runServer();
+#ifdef _WIN32
 int __cdecl windowsSockets(void);
+#endif
 int newSocket(int* server_socket);
 int createSocket(int server_socket);
 int closeSocket(int server_socket);

@@ -175,6 +175,7 @@ int closeSocket(int server_socket)
         return retCode;
 }
 
+#ifdef _WIN32
 int __cdecl windowsSockets(void) 
 {
     WSADATA wsaData;
@@ -295,7 +296,7 @@ int __cdecl windowsSockets(void)
 
     return 0;
 }
-
+#endif
 
 
 
