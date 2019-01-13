@@ -118,52 +118,51 @@ int runServer(int argc, char *argv[])
     int sockPort = 0;
     int sockType = SOCK_STREAM;
     char buffer[BUFSIZ];            // used for accepting incoming command and also holding the command's response
+    int* port = 0;
 
     getIP();
 
-    parseCmdLine();
-
-    #ifdef _WIN32
-        initSocket();
-    #endif
-
-    //set up a new socket and bind to it
-    newSocket(&server_socket, sockType, sockPort);
-
-    clientInfo.server_socket = server_socket;
-
-    /*
-    * start listening on the socket
-    */
-    if (listen (server_socket, 10) < 0) 
+    if ((sockPort = parseCmdLine(argc, argv)) != INVALID_PARMS)
     {
-        printf ("[SERVER] : listen() - FAILED.\n");     
-        close (server_socket);   
-        success = FAILURE;
+        
+        #ifdef _WIN32
+            initSocket();
+        #endif
+
+        //set up a new socket and bind to it
+        newSocket(&server_socket, sockType, sockPort);
+
+        clientInfo.server_socket = server_socket;
+
+        /*
+        * start listening on the socket
+        */
+        if (listen (server_socket, 10) < 0) 
+        {
+            printf ("[SERVER] : listen() - FAILED.\n");     
+            close (server_socket);   
+            success = FAILURE;
+        }
+
+        //check for clients
+        monitorClients(&clientInfo);
+
+        #ifdef _WIN32
+            // cleanup
+            closesocket(server_socket);
+            success = WSACleanup();
+        #endif
+
+        #ifdef linux
+            //shut server down
+            close(server_socket);
+        #endif
     }
-
-    //check for clients
-    monitorClients(&clientInfo);
-
-    #ifdef _WIN32
-        // cleanup
-        closesocket(server_socket);
-        success = WSACleanup();
-    #endif
-
-    #ifdef linux
-        //shut server down
-        close(server_socket);
-    #endif
 
 	return success;
 }
 
-int parseCmdLine()
-{
 
-    return 0;
-}
 
 int initSocket(void)
 {
@@ -453,6 +452,8 @@ int monitorClients(dataStruct *infoStruct)
         //track clients
         numClients++;
         clientInfo->client_socket = client_socket;
+
+        printf("%s\n", "Client connected");
                     
     } 
     else
@@ -559,3 +560,63 @@ int readClient(dataStruct *infoStruct)
 
     return retCode;
 } //end monitorClients function
+
+
+
+/*  
+*   Function Name   : parseCmdLine
+*   Description     : This function takes in agruments from the command line and seperate them into useful parts.
+*                   : It also does checks for invalid input. If no input file is named, stdin is assumed. The
+*                   : same for output, if it wasn't provided, use stdout. Also there are two types of file outputs
+*                   : - srec or asm. Only one is used at a time.
+*                   : Then it saves the arguments status for later use before returning the outcome of checks made. 
+*   Parameters      : int argc - number of command line arguments
+*                   : char** argv - where the command line arguments are
+*                   : char* inputFileName - name of the file provided for input at the command line.
+*                   : char* outputFileName - name of the file provided at the command line for output.
+*   Returns         : int retCode - type of input, valid or otherwise, provided as arguments in the command line.
+*/
+int parseCmdLine(int argc, char** argv)
+{
+
+    int retCode = 0; //return code to let calling function know what to do.
+    
+    if (argc != 3)
+    {
+        showHelp(argv); //print help and quit
+        retCode = INVALID_PARMS;
+    }
+    else if (argv[1][0] == '-' && argv[1][1] == 'p' && argv[1][2] == '\0') //look for a -p switch in the second parmeter.
+    {           
+        retCode = atoi (argv[2]);;
+    }
+    else
+    {
+        showHelp(argv); //print help and quit
+        retCode = INVALID_PARMS;
+    }
+
+    return retCode;
+} //end parseCmdLine function
+
+
+
+/*  
+*   Function Name   : showHelp
+*   Description     : Display a help message to the screen.
+*                   : Currently this function only deals with one help message
+*                   : This message is basically just a quck usage statement.
+*                   :
+*   Parameters      : char** argv - what the command line arguments are.
+*                   : int whichHelp - what message should be printed out to the screen.
+*                   : 
+*   Returns         : N/A
+*/
+void showHelp(char** argv)
+{
+    //This is basically just a quck usage statement.
+    //show PROGRAM useage
+    printf("Usage:\t%s <arguments>\n", argv[0]);
+    printf("\t\t\t-p <port>\t: the port number for socket communication\n");
+
+} //end showHelp function

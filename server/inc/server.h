@@ -43,11 +43,13 @@ int intSocket(void);
 int closeSocket(int server_socket);
 int readClient(dataStruct *infoStruct);
 void *socketThread(void *clientSocket);
-int parseCmdLine();
 int monitorClients(dataStruct *infoStruct);
+void showHelp(char** argv);
+int parseCmdLine(int argc, char** argv);
 
 
 
 /********CONSTANTS*******/
 #define SUCCESS 1
 #define FAILURE 0
+#define INVALID_PARMS -1
