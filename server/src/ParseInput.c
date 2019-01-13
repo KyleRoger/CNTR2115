@@ -53,17 +53,25 @@ int parseCmdLine(int argc, char** argv, char* inputFileName, char* outputFileNam
 			retCode = 1
 			i = argc + 1; 
 		}	
-		
-		#ifdef DISPLAY_MSG
-		printf("Inside the a for loop, checking for help flag, retCode is now %i\n", retCode);
-		printf("currently, i is %i and argc is %i\n", i, argc);
-		#endif
+elseif ((argv[i][0] == '-' && argv[i][1] == 'p' && argv[i][2] == '\0')
+{
+}
+elseif ((argv[i][0] == '-' && argv[i][1] == 'p' && argv[i][2] == '\0')
+{
+}
+
+		elseif ((argv[i][0] == '-' && argv[i][1] == 'p' && argv[i][2] == '\0')
+{
+}
+elseif ((argv[i][0] == '-' && argv[i][1] == 'p' && argv[i][2] == '\0')
+{
+}
+elseif ((argv[i][0] == '-' && argv[i][1] == 'p' && argv[i][2] == '\0')
+{
+}
+
 	}
 	
-		#ifdef DISPLAY_MSG
-		printf("Done cheching for the help flag, retCode is now %i\n", retCode);
-		printf("currently, i is %i and argc is %i\n", i, argc);
-		#endif
 	
 	//check that only switches were provided as arguments
 	for (int i = 1; i < argc; i++)
