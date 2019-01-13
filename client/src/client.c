@@ -111,5 +111,7 @@ unsigned short port = DEFAULT_PORT;
 			}
 		}
 	}
+
+	return 0;
 }
 
