@@ -88,6 +88,8 @@ int getIP(void)
         printf("Network Interface Name :- %s\n",id->ifa_name);
         printf("Network Address of %s :- %d\n",id->ifa_name,id->ifa_addr);
     #endif
+
+    return 0;
 }
 
 
@@ -108,7 +110,7 @@ int runServer()
 	int success = FAILURE;
     int server_socket = 0;        //This is the socket used by the server
 
-    createSocket();
+    createSocket(server_socket);
 
     /*
     * start listening on the socket
@@ -126,7 +128,7 @@ int runServer()
 
 
 
-int createSocket(void)
+int createSocket(int server_socket)
 {
     int result = 0;
     int successState = FAILURE;
@@ -321,57 +323,28 @@ int __cdecl windowsSockets(void)
 void *socketThread(void *clientSocket)
 {
   dataStruct* clientInfo = (dataStruct*) clientSocket;
-  int cID = clientInfo->clientID[numClients - 1];   //Used for tracking the clients ID
-  int clSocket = clientInfo->client_socket[cID - 1];
-
-  clientInfo->clientCount++;    //Track number of clients
+  int clSocket = clientInfo->client_socket;
 
   //read in the message from the client
-  read (clSocket, &clientInfo->clientMessage[cID - 1], sizeof(clientInfo->clientMessage));
+  read (clSocket, &clientInfo->clientMessage, sizeof(clientInfo->clientMessage));
 
-  clientInfo->client_socket[cID - 1] = clSocket;
+  clientInfo->client_socket = clSocket;
   int done = 1;
 
   //loop till client enters >>bye<<
-  while((done = strcmp(clientInfo->clientMessage[cID - 1].message,">>bye<<")) != 0)
+  while((done = strcmp(clientInfo->clientMessage.message,">>bye<<")) != 0)
   {
     
-    if (done != 0)
-    {
-        //broadcast struct to all clients
-        broadcastMSG(clientInfo, cID);
-    }
-    else
-    {
-        break;
-    }
+    
     
     //read in the message from the client
-    read (clSocket, &clientInfo->clientMessage[cID - 1], sizeof(clientInfo->clientMessage));
+    read (clSocket, &clientInfo->clientMessage, sizeof(clientInfo->clientMessage));
     
   }
   
-  // decrement the number of clients
-  numClients--;
-
-  if (numClients == 0)
-  {
-    //clean up the struct
-    removeClient(clientInfo, cID);
-
     //shut server down
-    close(clSocket);
-    close (clientInfo->server_socket);
-
-    signal( SIGALRM, handle_alarm ); // Install handler first
-    kill(getpid(), SIGALRM);
-  }
-  else
-  {
-    //clean up the struct
-    removeClient(clientInfo, cID);
-    close(clSocket);
-  }
+    /*close(clSocket);
+    close (clientInfo->server_socket);*/
     
   return 0;
 }
@@ -454,7 +427,6 @@ int readClient(dataStruct *infoStruct)
     {
           printf ("[SERVER] : accept() FAILED\n");
           fflush(stdout);   
-          break;
     }
 
     return retCode;

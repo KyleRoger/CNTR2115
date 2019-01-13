@@ -22,13 +22,23 @@
 #endif
 
 
+/******************************STRUCT*************************************/
+typedef struct dataStruct
+{
+	int server_socket;				//the server socket ID
+	int clientCount;				//number of clients
+	int client_socket;				//the client socket ID
+	msgStruct clientMessage;		//the struct containing the clients details and message. - in struct.h
+}dataStruct;
+
+
 
 /********PROTOTYPES*******/
 int getIP(void);
 int runServer();
 int __cdecl windowsSockets(void);
 int newSocket(int* server_socket);
-int createSocket(void);
+int createSocket(int server_socket);
 int closeSocket(int server_socket);
 int readClient(dataStruct *infoStruct);
 void *socketThread(void *clientSocket);
@@ -38,15 +48,3 @@ void *socketThread(void *clientSocket);
 /********CONSTANTS*******/
 #define SUCCESS 1
 #define FAILURE 0
-
-
-
-/******************************STRUCT*************************************/
-typedef struct dataStruct
-{
-	int server_socket;								//the server socket ID
-	int client_socket[MAX_CLIENTS + 1];				//the client socket ID
-	msgStruct clientMessage[MAX_CLIENTS + 1];		//the struct containing the clients details and message. - in struct.h
-	pthread_t 	clientThreadID[MAX_CLIENTS + 1];	//the client thread ID
-	pthread_t 	serverThreadID[MAX_CLIENTS + 1];	//the server thread ID
-}dataStruct;
