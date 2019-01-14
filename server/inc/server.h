@@ -46,6 +46,8 @@ void *socketThread(void *clientSocket);
 int monitorClients(dataStruct *infoStruct);
 void showHelp(char** argv);
 int parseCmdLine(int argc, char** argv);
+int handle_communications (SOCKET message_socket);
+void testType(socketInfo *testConnection, int serverSocket);
 
 
 
@@ -53,3 +55,5 @@ int parseCmdLine(int argc, char** argv);
 #define SUCCESS 1
 #define FAILURE 0
 #define INVALID_PARMS -1
+
+#define DEBUG	//debugging messages

@@ -35,3 +35,11 @@ typedef struct messageStruct
 	char 		name[NAME_LENGTH + 1];		//The sending client's name
 	char 		message[MSG_SIZE + 1];		//The message that the client sent
 }msgStruct;
+
+typedef struct socketStruct				
+{
+	int 		socketType;
+	int 		port;
+	int 		blockSize;
+	int 		numBlocks;
+}socketInfo;

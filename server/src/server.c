@@ -26,7 +26,7 @@
 #undef UNICODE
 
 static int numClients = 0;  //used to track the number of clients attached.
-
+int fExitFlag = 0;
 
 
 /*  
@@ -112,17 +112,28 @@ void getIP(void)
 int runServer(int argc, char *argv[])
 {
 	int success = FAILURE;
-    int server_socket = 0;          //This is the socket used by the server
-    int client_socket = 0;          //the client socket ID
-    dataStruct clientInfo   = { 0 };    //This struct is used to hold messages sent from clients.
-    int sockPort = 0;
-    int sockType = SOCK_STREAM;
+    #ifdef _WIN32
+        SOCKET serverSocket = 0;          //This is the socket used by the server
+        SOCKET clientSocket = 0;          //the client socket ID
+        SOCKET testSocket = 0;
+    #endif
+    #ifdef linux
+        int serverSocket = 0;          //This is the socket used by the server
+        int clientSocket = 0;          //the client socket ID
+        int testSocket = 0;
+    #endif
+    int socketPort = 15000;
+    int socketType = SOCK_STREAM;
     char buffer[BUFSIZ];            // used for accepting incoming command and also holding the command's response
-    int* port = 0;
+    socketInfo testConnection;
+    int bind_value;
+    int fromlen;
+    struct sockaddr_in local;
+    struct sockaddr_in from;
 
     getIP();
 
-    if ((sockPort = parseCmdLine(argc, argv)) != INVALID_PARMS)
+    if ((socketPort = parseCmdLine(argc, argv)) != INVALID_PARMS)
     {
         
         #ifdef _WIN32
@@ -130,26 +141,33 @@ int runServer(int argc, char *argv[])
         #endif
 
         //set up a new socket and bind to it
-        newSocket(&server_socket, sockType, sockPort);
+        newSocket(&serverSocket, socketType, socketPort);
 
-        clientInfo.server_socket = server_socket;
+        testType(&testConnection, serverSocket);
 
+        #ifdef DEBUG
+        printf("%s\n", "Test connection details"); 
+        printf("Socket is: %i\n", testConnection.socketType);
+        printf("Port is: %i\n", testConnection.port);
+        printf("Block size is: %i\n", testConnection.blockSize);
+        printf("Number of blocks is: %i\n", testConnection.numBlocks);
+        #endif
         /*
         * start listening on the socket
         */
-        if (listen (server_socket, 10) < 0) 
+        if (listen (serverSocket, 10) < 0) 
         {
             printf ("[SERVER] : listen() - FAILED.\n");     
-            close (server_socket);   
+            close (serverSocket);   
             success = FAILURE;
         }
 
         //check for clients
-        monitorClients(&clientInfo);
+        //monitorClients(&clientInfo);
 
         #ifdef _WIN32
             // cleanup
-            closesocket(server_socket);
+            closesocket(serverSocket);
             success = WSACleanup();
         #endif
 
@@ -161,6 +179,79 @@ int runServer(int argc, char *argv[])
 
 	return success;
 }
+
+
+
+void testType(socketInfo *testConnection, int serverSocket)
+{
+
+    socketInfo* socketDetails = (socketInfo*) testConnection;
+    int     client_socket   = 0;                            //The client's socket, set by the accept call.
+    int     client_len      = 0;                            //The size of the client_addr struct.
+    struct  sockaddr_in client_addr;                        //Struct with details about client socket.
+    //char buf[BUFSIZ];
+
+    printf("%s\n", "Check for type of test connection");
+
+    /*
+    * start listening on the socket
+    */
+    if (listen (serverSocket, 10) < 0) 
+    {
+        printf ("[SERVER] : listen() - FAILED.\n");     
+        close (serverSocket);   
+    }
+    else
+    {
+        /*
+        * accept a packet from the client.
+        * this is a blocking operation.
+        */
+        printf("%s\n", "Block till client is accepted");
+        client_len = sizeof (client_addr);
+        if ((client_socket = accept (serverSocket,(struct sockaddr *)&client_addr, &client_len)) < 0) 
+        {
+              printf ("[SERVER] : accept() FAILED\n");
+              fflush(stdout);   
+        }
+
+        printf("%s\n", "Client accepted");
+
+        //get socket type, port, block size, number of blocks
+        //read (client_socket, buf, sizeof(buf));
+        char buf[BUFSIZ] = {'\0'};
+        recv (client_socket, buf, 1024, 0);
+
+        // Credit: https://www.w3resource.com/c-programming-exercises/string/c-string-exercise-31.php
+        char newString[10][10]; 
+        int j = 0;
+        int ctr = 0;
+     
+        for(int i=0; i <= (strlen(buf)); i++)
+        {
+            // if space or NULL found, assign NULL into newString[ctr]
+            if(buf[i] == ' ' || buf[i] == '\0')
+            {
+                newString[ctr][j]='\0';
+                ctr++;  //for next word
+                j=0;    //for next word, init index to 0
+            }
+            else
+            {
+                newString[ctr][j] = buf[i];
+                j++;
+            }
+        }
+
+        socketDetails->socketType = atoi(newString[0]);
+        socketDetails->port = atoi(newString[1]);
+        socketDetails->blockSize = atoi(newString[2]);
+        socketDetails->numBlocks = atoi(newString[3]);
+
+        fflush(stdout);
+    }
+}
+
 
 
 
@@ -466,9 +557,13 @@ int monitorClients(dataStruct *infoStruct)
     char buffer[BUFSIZ];
     //read in the message from the client
     //read (clSocket, &clientInfo->clientMessage, sizeof(clientInfo->clientMessage));
-    read (clSocket, buffer, sizeof(buffer));
+    printf("%s\n", "About to read from client");
+    recv (clSocket, buffer, 1024, 0);
+    buffer[1023] = '\0';    // ensure null termination!
 
-    printf("%s\n", buffer);
+    //read (clSocket, buffer, sizeof(buffer));
+
+    printf("read: %s\n", buffer);
 
     clientInfo->client_socket = clSocket;
     int done = 1;
@@ -499,7 +594,7 @@ int monitorClients(dataStruct *infoStruct)
 */
 int newSocket(int* server_socket, int sockType, int sockPort)
 {
-    int retCode = 0;        //the return value indicating the success or failure of the function
+    int retCode = 0;                    //the return value indicating the success or failure of the function
     struct sockaddr_in server_addr;     //A struct used for the socket information.
 
     //set up socket

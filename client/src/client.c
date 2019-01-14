@@ -101,6 +101,10 @@ unsigned short port = DEFAULT_PORT;
 							break;
 
 						}
+						else
+						{
+							printf("%i\n", i);
+						}
 						memset(buffer, 0, totalSize);
 					}
 #ifdef _WIN32
