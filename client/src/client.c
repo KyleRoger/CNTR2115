@@ -61,24 +61,6 @@ unsigned short port = DEFAULT_PORT;
 
 				totalSize = atoi(argv[2]);
 
-				if (totalSize == 1000)
-				{
-					buffer = buffer1000;
-				}
-				else if (totalSize == 2000)
-				{
-					buffer = buffer2000;
-
-				}
-				else if (totalSize == 5000)
-				{
-					buffer = buffer5000;
-				}
-				else if (totalSize == 10000)
-				{
-					buffer = buffer1000;
-				}
-
 				amountOfPackage = atoi(argv[3]);
 				if ((amountOfPackage == 0) || (amountOfPackage > 1000000))
 				{
