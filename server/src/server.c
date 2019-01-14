@@ -463,8 +463,12 @@ int monitorClients(dataStruct *infoStruct)
 
     int clSocket = clientInfo->client_socket;
 
+    char buffer[BUFSIZ];
     //read in the message from the client
-    read (clSocket, &clientInfo->clientMessage, sizeof(clientInfo->clientMessage));
+    //read (clSocket, &clientInfo->clientMessage, sizeof(clientInfo->clientMessage));
+    read (clSocket, buffer, sizeof(buffer));
+
+    printf("%s\n", buffer);
 
     clientInfo->client_socket = clSocket;
     int done = 1;
