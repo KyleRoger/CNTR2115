@@ -46,7 +46,6 @@ void *socketThread(void *clientSocket);
 int monitorClients(dataStruct *infoStruct);
 void showHelp(char** argv);
 int parseCmdLine(int argc, char** argv);
-int handle_communications (SOCKET message_socket);
 void testType(socketInfo *testConnection, int serverSocket);
 
 

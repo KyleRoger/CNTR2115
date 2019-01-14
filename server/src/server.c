@@ -173,7 +173,7 @@ int runServer(int argc, char *argv[])
 
         #ifdef linux
             //shut server down
-            close(server_socket);
+            close(serverSocket);
         #endif
     }
 
