@@ -153,18 +153,10 @@ int runServer(int argc, char *argv[])
         printf("Number of blocks is: %i\n", testConnection.numBlocks);
         #endif
 
-        if (testConnection.socketType == SOCK_STREAM)
-        {
-            /*
-            * start listening on the socket
-            */
-            if (listen (serverSocket, 10) < 0) 
-            {
-                printf ("[SERVER] : listen() - FAILED.\n");     
-                close (serverSocket);   
-                success = FAILURE;
-            }
-        }
+        readClient();
+
+
+        
 
         //check for clients
         //monitorClients(&clientInfo);
@@ -225,7 +217,7 @@ void testType(socketInfo *testConnection, int serverSocket)
         //read (client_socket, buf, sizeof(buf));
         char buf[BUFSIZ] = {'\0'};
         recv (client_socket, buf, 1024, 0);
-
+        printf("Read [%s] from client\n", buf);
         // Credit: https://www.w3resource.com/c-programming-exercises/string/c-string-exercise-31.php
         char newString[10][10]; 
         int j = 0;
@@ -643,6 +635,9 @@ int newSocket(int* server_socket, int sockType, int sockPort)
 */
 int readClient(dataStruct *infoStruct)
 {
+
+
+
     dataStruct* clientInfo  = (dataStruct*) infoStruct;     //A pointer to the struct that has all the client and server info.
     int     retCode         = 0;                            //The return value indicating the success or failure of the function.
     int     client_socket   = 0;                            //The client's socket, set by the accept call.
@@ -650,6 +645,20 @@ int readClient(dataStruct *infoStruct)
     int     server_socket   = clientInfo->server_socket;    //The server's socket.
     struct  sockaddr_in client_addr;                        //Struct with details about client socket.
     
+
+    if (testConnection.socketType == SOCK_STREAM)
+    {
+        /*
+        * start listening on the socket
+        */
+        if (listen (serverSocket, 10) < 0) 
+        {
+            printf ("[SERVER] : listen() - FAILED.\n");     
+            close (serverSocket);   
+            success = FAILURE;
+        }
+    }
+
     /*
     * accept a packet from the client.
     * this is a blocking operation.
