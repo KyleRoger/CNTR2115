@@ -153,14 +153,17 @@ int runServer(int argc, char *argv[])
         printf("Number of blocks is: %i\n", testConnection.numBlocks);
         #endif
 
-        /*
-        * start listening on the socket
-        */
-        if (listen (serverSocket, 10) < 0) 
+        if (testConnection.socketType == SOCK_STREAM)
         {
-            printf ("[SERVER] : listen() - FAILED.\n");     
-            close (serverSocket);   
-            success = FAILURE;
+            /*
+            * start listening on the socket
+            */
+            if (listen (serverSocket, 10) < 0) 
+            {
+                printf ("[SERVER] : listen() - FAILED.\n");     
+                close (serverSocket);   
+                success = FAILURE;
+            }
         }
 
         //check for clients
