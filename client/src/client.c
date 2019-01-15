@@ -7,6 +7,11 @@
 int runClient(int argc, char* argv[])
 {
 unsigned short port = DEFAULT_PORT;
+	int sockType = 0;
+	int userPort = 0;
+	int blockSize = 0;
+	int numBlocks = 0;
+	int initialMessage[4]
 	int retval = 0;
 	char * buffer = NULL;
 	int totalSize = 0;
@@ -18,17 +23,35 @@ unsigned short port = DEFAULT_PORT;
 	WSADATA wsaData;
 	SOCKET  conn_socket;
 #endif
-	
-	char buffer1000[1000] = "";
-	char buffer2000[2000] = "";
-	char buffer5000[5000] = "";
-	char buffer10000[10000] = "";
 	if (argc != 4)
 	{
 		printf("Not correct amount of Agruments");
 	}
 	else
 	{
+		//Send sck type, port, block size, block number.
+		if(strcmp(argv[0],"-TCP") == NULL)
+		{
+			sockType = SOCK_STREAM;
+		}
+		else if(strcmp(argv[0],"-UDP") == NULL)
+		{
+			sockType = SOCK_DGRAM;
+		}
+		else
+		{
+			printf("Invalid Argument.");
+		}
+
+		userPort = argv[1];
+		blockSize = argv[2];
+		numBlocks = argv[3];
+
+		initialMessage[0] = sockType;
+		initialMessage[1] = userPort;
+		initialMessage[2] = blockSize;
+		initialMessage[3] = numBlocks;
+
 #ifdef _WIN32
 		if ((retval = WSAStartup(0x202, &wsaData)) != 0) {
 			printf("WSAStartup failed with error\n");
@@ -44,7 +67,7 @@ unsigned short port = DEFAULT_PORT;
 
 			conn_socket = socket(AF_INET, SOCK_STREAM, 0); 
 			if (conn_socket < 0) {
-				printf("Client: Error Opening socket: Error\n");
+				printf("Client: Error Opening socket: Error\n");/
 #ifdef _WIN32				
 				WSACleanup();
 #endif
@@ -58,6 +81,13 @@ unsigned short port = DEFAULT_PORT;
 					WSACleanup();
 #endif			
 				}
+
+					sprintf(buffer, "%d", i);
+						retval = send(conn_socket, initialMessage, totalSize, 0);
+
+
+
+
 
 				totalSize = atoi(argv[2]);
 
