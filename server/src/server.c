@@ -153,7 +153,7 @@ int runServer(int argc, char *argv[])
         printf("Number of blocks is: %i\n", testConnection.numBlocks);
         #endif
 
-        readClient();
+        //readClient();
 
 
         
@@ -646,18 +646,7 @@ int readClient(dataStruct *infoStruct)
     struct  sockaddr_in client_addr;                        //Struct with details about client socket.
     
 
-    if (testConnection.socketType == SOCK_STREAM)
-    {
-        /*
-        * start listening on the socket
-        */
-        if (listen (serverSocket, 10) < 0) 
-        {
-            printf ("[SERVER] : listen() - FAILED.\n");     
-            close (serverSocket);   
-            success = FAILURE;
-        }
-    }
+    
 
     /*
     * accept a packet from the client.
