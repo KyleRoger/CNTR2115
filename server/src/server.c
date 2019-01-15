@@ -148,7 +148,7 @@ int runServer(int argc, char *argv[])
         #ifdef DEBUG
         printf("%s\n", "Test connection details"); 
         printf("Socket is: %i\n", testConnection.socketType);
-        printf("Port is: %i\n", testConnection.port);
+        printf("Port is: %i\n", testConnection.userPort);
         printf("Block size is: %i\n", testConnection.blockSize);
         printf("Number of blocks is: %i\n", testConnection.numBlocks);
         #endif
@@ -216,7 +216,7 @@ void testType(socketInfo *testConnection, int serverSocket)
         //get socket type, port, block size, number of blocks
         //read (client_socket, buf, sizeof(buf));
         char buf[BUFSIZ] = {'\0'};
-        recv (client_socket, buf, 1024, 0);
+        recv (client_socket, socketDetails, 1024, 0);
         printf("Read [%s] from client\n", buf);
         // Credit: https://www.w3resource.com/c-programming-exercises/string/c-string-exercise-31.php
         char newString[10][10]; 
@@ -239,10 +239,10 @@ void testType(socketInfo *testConnection, int serverSocket)
             }
         }
 
-        socketDetails->socketType = atoi(newString[0]);
-        socketDetails->port = atoi(newString[1]);
+/*        socketDetails->socketType = atoi(newString[0]);
+        socketDetails->userPort = atoi(newString[1]);
         socketDetails->blockSize = atoi(newString[2]);
-        socketDetails->numBlocks = atoi(newString[3]);
+        socketDetails->numBlocks = atoi(newString[3]);*/
 
         fflush(stdout);
     }
