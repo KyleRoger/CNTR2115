@@ -13,7 +13,6 @@ int runClient(int argc, char* argv[])
 	int retval = 0;
 	char * buffer = NULL;
 	int totalSize = 0;
-	int amountOfPackage = 0;
 	unsigned int addr;
 	struct sockaddr_in server;
 
@@ -89,10 +88,16 @@ int runClient(int argc, char* argv[])
 #endif			
 				}
 
+				printf("%i\n", initialConnect.socketType);
+				printf("%i\n", initialConnect.userPort);
 				printf("%i\n", initialConnect.blockSize);
+				printf("%i\n", initialConnect.numBlocks);
 				retval = write(conn_socket, initialConnect, sizeof(initialConnect));
 
-
+#ifdef _WIN32
+				closesocket(conn_socket);
+				WSACleanup();
+#endif
 
 
 
