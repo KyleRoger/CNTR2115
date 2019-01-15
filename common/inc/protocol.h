@@ -13,7 +13,7 @@
 
 
 /*******************************CONSTANTS*********************************************/
-//#define DEFAULT_PORT 	"15000"											//The port to use in communication, chosen at random.
+#define DEFAULT_PORT 	"15000"											//The port to use in communication, chosen at random.
 #define PORT 			15000
 #define BUFFER_SIZE		1024											//The size of the message array that is sent in the socket
 #define IP_SIZE			20												//Number of elements in the message array reserved for the IP address

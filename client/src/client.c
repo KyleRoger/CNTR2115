@@ -6,12 +6,12 @@
 
 int runClient(int argc, char* argv[])
 {
-unsigned short port = DEFAULT_PORT;
+unsigned short port = 15000;
 	int sockType = 0;
 	int userPort = 0;
 	int blockSize = 0;
 	int numBlocks = 0;
-	int initialMessage[4];
+	char initialMessage[4];
 	int retval = 0;
 	char * buffer = NULL;
 	int totalSize = 0;
@@ -30,11 +30,11 @@ unsigned short port = DEFAULT_PORT;
 	else
 	{
 		//Send sck type, port, block size, block number.
-		if(strcmp(argv[0],"-TCP") == NULL)
+		if(strcmp(argv[0],"-TCP") == 0)
 		{
 			sockType = SOCK_STREAM;
 		}
-		else if(strcmp(argv[0],"-UDP") == NULL)
+		else if(strcmp(argv[0],"-UDP") == 0)
 		{
 			sockType = SOCK_DGRAM;
 		}
@@ -43,9 +43,9 @@ unsigned short port = DEFAULT_PORT;
 			printf("Invalid Argument.");
 		}
 
-		userPort = argv[1];
-		blockSize = argv[2];
-		numBlocks = argv[3];
+		userPort = atoi(argv[1]);
+		blockSize = atoi(argv[2]);
+		numBlocks = atoi(argv[3]);
 
 		initialMessage[0] = sockType;
 		initialMessage[1] = userPort;
@@ -67,7 +67,7 @@ unsigned short port = DEFAULT_PORT;
 
 			conn_socket = socket(AF_INET, SOCK_STREAM, 0); 
 			if (conn_socket < 0) {
-				printf("Client: Error Opening socket: Error\n");/
+				printf("Client: Error Opening socket: Error\n");
 #ifdef _WIN32				
 				WSACleanup();
 #endif
@@ -81,8 +81,7 @@ unsigned short port = DEFAULT_PORT;
 					WSACleanup();
 #endif			
 				}
-
-					sprintf(buffer, "%d", i);
+				printf("%s\n", initialMessage);
 						retval = send(conn_socket, initialMessage, totalSize, 0);
 
 
