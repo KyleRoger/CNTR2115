@@ -97,7 +97,7 @@ int runClient(int argc, char* argv[])
 				}
 
 				printf("%i\n", initialConnect.blockSize);
-				retval = write(conn_socket, initialConnect, totalSize, 0);
+				retval = write(conn_socket, initialConnect, sizeof(initialConnect));
 
 
 
