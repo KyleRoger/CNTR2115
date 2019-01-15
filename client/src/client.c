@@ -11,7 +11,7 @@ unsigned short port = DEFAULT_PORT;
 	int userPort = 0;
 	int blockSize = 0;
 	int numBlocks = 0;
-	int initialMessage[4]
+	int initialMessage[4];
 	int retval = 0;
 	char * buffer = NULL;
 	int totalSize = 0;
