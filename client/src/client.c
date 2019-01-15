@@ -6,12 +6,14 @@
 
 int runClient(int argc, char* argv[])
 {
-unsigned short port = 15000;
+	int port = 15000;
+	int i =0;
+	int serverIP = 0;
 	int sockType = 0;
 	int userPort = 0;
 	int blockSize = 0;
 	int numBlocks = 0;
-	char initialMessage[4];
+	char initialMessage[BUFSIZ];
 	int retval = 0;
 	char * buffer = NULL;
 	int totalSize = 0;
@@ -23,29 +25,42 @@ unsigned short port = 15000;
 	WSADATA wsaData;
 	SOCKET  conn_socket;
 #endif
-	if (argc != 4)
+	if (argc != 10)
 	{
 		printf("Not correct amount of Agruments");
 	}
 	else
 	{
-		//Send sck type, port, block size, block number.
-		if(strcmp(argv[0],"-TCP") == 0)
+		for(i = 0; i >argc; i++;)
 		{
-			sockType = SOCK_STREAM;
-		}
-		else if(strcmp(argv[0],"-UDP") == 0)
-		{
-			sockType = SOCK_DGRAM;
-		}
-		else
-		{
-			printf("Invalid Argument.");
+
+			//Send sck type, port, block size, block number.
+			if(strcmp(argv[i],"-TCP") == 0)
+			{
+				sockType = SOCK_STREAM;
+			}
+			else if(strcmp(argv[i],"-UDP") == 0)
+			{
+				sockType = SOCK_DGRAM;
+			}
+			else if(strcmp(argv[i], "-a") ==0)
+			{
+				serverIP = argv[i + 1];
+			}
+			else if(strcmp(argv[i],"-p") == 0)
+			{
+				userPort = argv[i+1];
+			}
+			else if(strcmp(argv[i],"-s") == 0)
+			{
+				blockSize = argv[i+1];
+			}
+			else if(strcmp(argv[i],"-n") == 0)
+			{
+				numBlocks = argv[i+1];
+			}
 		}
 
-		userPort = atoi(argv[1]);
-		blockSize = atoi(argv[2]);
-		numBlocks = atoi(argv[3]);
 
 		initialMessage[0] = sockType;
 		initialMessage[1] = userPort;
@@ -63,10 +78,11 @@ unsigned short port = 15000;
 			
 			server.sin_family = AF_INET;
 			server.sin_port = htons(port);
-			server.sin_addr.s_addr = inet_addr(argv[1]);
+			server.sin_addr.s_addr = inet_addr(serverIP);
 
 			conn_socket = socket(AF_INET, SOCK_STREAM, 0); 
-			if (conn_socket < 0) {
+			if (conn_socket < 0) 
+			{
 				printf("Client: Error Opening socket: Error\n");
 #ifdef _WIN32				
 				WSACleanup();
@@ -81,14 +97,15 @@ unsigned short port = 15000;
 					WSACleanup();
 #endif			
 				}
+
 				printf("%s\n", initialMessage);
-						retval = send(conn_socket, initialMessage, totalSize, 0);
+				retval = send(conn_socket, initialMessage, totalSize, 0);
 
 
 
 
 
-				totalSize = atoi(argv[2]);
+				/*totalSize = atoi(argv[2]);
 
 				amountOfPackage = atoi(argv[3]);
 				if ((amountOfPackage == 0) || (amountOfPackage > 1000000))
@@ -117,12 +134,12 @@ unsigned short port = 15000;
 							printf("%i\n", i);
 						}
 						memset(buffer, 0, totalSize);
-					}
+					}*/
 #ifdef _WIN32
 					closesocket(conn_socket);
 					WSACleanup();
 #endif
-				}
+			
 			}
 		}
 	}
