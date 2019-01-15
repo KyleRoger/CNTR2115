@@ -31,7 +31,7 @@ int runClient(int argc, char* argv[])
 	}
 	else
 	{
-		for(i = 0; i >argc; i++;)
+		for(i = 0; i >argc; i++)
 		{
 
 			//Send sck type, port, block size, block number.
