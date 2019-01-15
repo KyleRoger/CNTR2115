@@ -152,6 +152,7 @@ int runServer(int argc, char *argv[])
         printf("Block size is: %i\n", testConnection.blockSize);
         printf("Number of blocks is: %i\n", testConnection.numBlocks);
         #endif
+
         /*
         * start listening on the socket
         */
