@@ -3,17 +3,10 @@
 
 #include "../inc/client.h"
 
-struct Message {
-	int sockType;
-	int userPort;
-	int blockSize;
-	int numBlocks;
-
-};
 
 int runClient(int argc, char* argv[])
 {
-	struct Message initialConnect;
+	socketInfo initialConnect;
 	int port = 15000;
 	int i =0;
 	char* serverIP = NULL;
@@ -40,11 +33,11 @@ int runClient(int argc, char* argv[])
 			//Send sck type, port, block size, block number.
 			if(strcmp(argv[i],"-TCP") == 0)
 			{
-				initialConnect.sockType = SOCK_STREAM;
+				initialConnect.socketType = SOCK_STREAM;
 			}
 			else if(strcmp(argv[i],"-UDP") == 0)
 			{
-				initialConnect.sockType = SOCK_DGRAM;
+				initialConnect.socketType = SOCK_DGRAM;
 			}
 			else if(strcmp(argv[i], "-a") ==0)
 			{

@@ -39,7 +39,7 @@ typedef struct messageStruct
 typedef struct socketStruct				
 {
 	int 		socketType;
-	int 		port;
+	int 		userPort;
 	int 		blockSize;
 	int 		numBlocks;
 }socketInfo;
