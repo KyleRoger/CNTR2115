@@ -92,7 +92,7 @@ int runClient(int argc, char* argv[])
 				printf("%i\n", initialConnect.userPort);
 				printf("%i\n", initialConnect.blockSize);
 				printf("%i\n", initialConnect.numBlocks);
-				retval = write(conn_socket, initialConnect, sizeof(initialConnect));
+				write(conn_socket, &initialConnect, sizeof(initialConnect));
 
 #ifdef _WIN32
 				closesocket(conn_socket);
