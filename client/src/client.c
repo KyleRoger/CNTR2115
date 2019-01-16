@@ -160,30 +160,29 @@ int runClient(int argc, char* argv[])
 							WSACleanup();
 #endif			
 						}
-						int y = 0;
 
-						for(y =  0; y < initialConnect.numBlocks; y++)
+						char block = malloc(initialConnect.blockSize);
+					
+						for(i =  0; i < initialConnect.numBlocks; i++)
 						{
-							for (i = 0; i < initialConnect.blockSize; i++)
-							{
-								sprintf(buffer, "%d of %s", i, numBlocks);
-								printf("%s\n", buffer );
-								retval = send(conn_socket, buffer, initialConnect.numBlocks, 0);
+
+							memset(block, '\0',initialConnect.blockSize);
+
+							strcpy(block,i);
+           
+								//sprintf(buffer, "%d of %s", i, initialConnect.numBlocks);
+								//printf("%s\n", buffer );
+								retval = send(conn_socket, block, sizeof(block), 0);
 								if (retval < 0) {
 									printf("send() failed: error %d\n", i);
 #ifdef _WIN32					
 									WSACleanup();
 #endif					
 									break;
-
-								}
-								else
-								{
-									printf("%i\n", i);
-								}
 								//memset(buffer, 0, totalSize);
 							}
 						}
+						free(block);
 #ifdef _WIN32
 						closesocket(conn_socket);
 						WSACleanup();
