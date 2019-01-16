@@ -116,11 +116,12 @@ int runServer(int argc, char *argv[])
         SOCKET serverSocket = 0;          //This is the socket used by the server
         SOCKET clientSocket = 0;          //the client socket ID
         SOCKET testSocket = 0;
+        SOCKET benchMarkSocket = 0;        //The socket used for benchmark tests
     #endif
     #ifdef linux
         int serverSocket = 0;           //This is the socket used by the server
         int clientSocket = 0;           //the client socket ID
-        int banchMarkSocket = 0;        //The socket used for benchmark tests
+        int benchMarkSocket = 0;        //The socket used for benchmark tests
     #endif
     int socketPort = 15000;
     int socketType = SOCK_STREAM;
@@ -154,17 +155,17 @@ int runServer(int argc, char *argv[])
         #endif
 
         //Create a socket for benmarking
-        newSocket(&banchMarkSocket, benchMarchConnection.socketType, benchMarchConnection.userPort);
+        newSocket(&benchMarkSocket, benchMarchConnection.socketType, benchMarchConnection.userPort);
 
         if(benchMarchConnection.socketType == SOCK_STREAM)
         {
             /*
             * start listening on the socket
             */
-            if (listen (banchMarkSocket, 10) < 0) 
+            if (listen (benchMarkSocket, 10) < 0) 
             {
                 printf ("[SERVER] : listen() - FAILED.\n");     
-                close (banchMarkSocket);   
+                close (benchMarkSocket);   
             }
             else
             {
@@ -173,7 +174,7 @@ int runServer(int argc, char *argv[])
         }
 
 
-        readClient(banchMarkSocket);
+        readClient(benchMarkSocket);
 
 
         
@@ -308,7 +309,7 @@ int initSocket(void)
         else
         {
             printf("%s\n", "Winsock initialized"); 
-            statusState = status;
+            statusState = SUCCESS;
         }
     #endif
 
@@ -671,25 +672,41 @@ int newSocket(int* server_socket, int sockType, int sockPort)
 */
 int readClient(int benchMarkSocket)
 {
-    dataStruct* clientInfo  = (dataStruct*) infoStruct;     //A pointer to the struct that has all the client and server info.
     int     retCode         = 0;                            //The return value indicating the status or failure of the function.
     int     client_socket   = 0;                            //The client's socket, set by the accept call.
     int     client_len      = 0;                            //The size of the client_addr struct.
-    int     server_socket   = clientInfo->server_socket;    //The server's socket.
     struct  sockaddr_in client_addr;                        //Struct with details about client socket.
+    char block[BUFSIZ] = {'\0'};
 
     /*
     * accept a packet from the client.
     * this is a blocking operation.
     */
     client_len = sizeof (client_addr);
-    if ((client_socket = accept (server_socket,(struct sockaddr *)&client_addr, &client_len)) < 0) 
+    if ((client_socket = accept (benchMarkSocket,(struct sockaddr *)&client_addr, &client_len)) < 0) 
     {
           printf ("[SERVER] : accept() FAILED\n");
           fflush(stdout);   
           retCode = FAILURE;
     }
 
+    printf("%s\n", "benchmark socket accepted");
+    #ifdef _WIN32
+        if (recv (client_socket, (void*)&block, sizeof(block), 0) < 0)
+        {
+            printf ("[SERVER] : socket() recv FAILED. \nErrno returned %i\n", errno);
+        }
+    #endif
+    #ifdef linux
+        if (read (client_socket, &block, sizeof(block)) < 0)
+        {
+            printf ("[SERVER] : socket() recv FAILED. \nErrno returned %i\n", errno);
+        }
+    #endif
+
+    #ifdef DEBUG
+        printf("%s\n", block);
+    #endif
 
     return retCode;
 } //end monitorClients function
