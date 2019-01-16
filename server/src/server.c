@@ -217,7 +217,7 @@ void testType(socketInfo *testConnection, int serverSocket)
         char buf[BUFSIZ] = {'\0'};
         //read (client_socket, socketDetails, sizeof(socketDetails));
         #ifdef _WIN32
-            if (recv (client_socket, (void*)&socketDetails, sizeof(socketInfo), 0) < 0)
+            if (recv (client_socket, (void*)&buf, sizeof(buf), 0) < 0)
             {
                 printf ("[SERVER] : socket() recv FAILED. \nErrno returned %i\n", errno);
             }
@@ -255,10 +255,10 @@ void testType(socketInfo *testConnection, int serverSocket)
             }
         }
 
-/*        socketDetails->socketType = atoi(newString[0]);
+        socketDetails->socketType = atoi(newString[0]);
         socketDetails->userPort = atoi(newString[1]);
         socketDetails->blockSize = atoi(newString[2]);
-        socketDetails->numBlocks = atoi(newString[3]);*/
+        socketDetails->numBlocks = atoi(newString[3]);
 
         fflush(stdout);
     }
