@@ -41,7 +41,7 @@ int __cdecl windowsSockets(void);
 int newSocket(int* server_socket, int sockType, int sockPort);
 int intSocket(void);
 int closeSocket(int server_socket);
-int readClient(dataStruct *infoStruct);
+int readClient(int benchMarkSocket);
 void *socketThread(void *clientSocket);
 int monitorClients(dataStruct *infoStruct);
 void showHelp(char** argv);

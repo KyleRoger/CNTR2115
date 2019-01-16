@@ -12,6 +12,7 @@ int runClient(int argc, char* argv[])
 	char* serverIP = NULL;
 	int retval = 0;
 	char * buffer = NULL;
+	char buf[BUFSIZ] = {'\0'};
 	int totalSize = 0;
 	unsigned int addr;
 	struct sockaddr_in server;
@@ -32,10 +33,16 @@ int runClient(int argc, char* argv[])
 			//Send sck type, port, block size, block number.
 			if(strcmp(argv[i],"-TCP") == 0)
 			{
+				//strcpy(buf, SOCK_STREAM);
+				// buf = (int)SOCK_STREAM;
+				strcpy(buf, "1");
+				strcat(buf, " ");
 				initialConnect.socketType = SOCK_STREAM;
 			}
 			else if(strcmp(argv[i],"-UDP") == 0)
 			{
+				strcpy(buf, "2");
+				strcat(buf, " ");
 				initialConnect.socketType = SOCK_DGRAM;
 			}
 			else if(strcmp(argv[i], "-a") ==0)
@@ -44,14 +51,19 @@ int runClient(int argc, char* argv[])
 			}
 			else if(strcmp(argv[i],"-p") == 0)
 			{
+				strcat(buf, argv[i+1]);
+				strcat(buf, " ");
 				initialConnect.userPort = atoi(argv[i+1]);
 			}
 			else if(strcmp(argv[i],"-s") == 0)
 			{
+				strcat(buf, argv[i+1]);
+				strcat(buf, " ");
 				initialConnect.blockSize = atoi(argv[i+1]);
 			}
 			else if(strcmp(argv[i],"-n") == 0)
 			{
+				strcat(buf, argv[i+1]);
 				initialConnect.numBlocks = atoi(argv[i+1]);
 			}
 		}
@@ -92,7 +104,11 @@ int runClient(int argc, char* argv[])
 				printf("%i\n", initialConnect.userPort);
 				printf("%i\n", initialConnect.blockSize);
 				printf("%i\n", initialConnect.numBlocks);
-				write(conn_socket, &initialConnect, sizeof(initialConnect));
+				/*strcpy(buf, initialConnect.socketType);
+				strcat(buf, " ");
+				strcat(buf, initialConnect.userPort);*/
+				printf("buf is: %s\n", buf);
+				retval = send(conn_socket, buf, sizeof(buf), 0);
 
 #ifdef _WIN32
 				closesocket(conn_socket);
