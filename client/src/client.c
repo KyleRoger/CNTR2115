@@ -6,6 +6,7 @@
 
 int runClient(int argc, char* argv[])
 {
+	socketInfo initialConnect;
 	int port = 15000;
 	int i =0;
 	int socketType = 0;
@@ -16,6 +17,10 @@ int runClient(int argc, char* argv[])
 	char* serverIP = NULL;
 	int retval = 0;
 	char * buffer = NULL;
+	char block1000[1000] = "";
+	char block2000[2000] = "";
+	char block5000[5000] = "";
+	char block10000[10000] = "";
 	char buf[BUFSIZ] = {'\0'};
 	int totalSize = 0;
 	unsigned int addr;
@@ -75,6 +80,25 @@ int runClient(int argc, char* argv[])
 		if(blockSize != 1000 && blockSize != 2000 && blockSize != 5000 && blockSize != 10000)
 		{
 			printf("Invalid Number of Blocks\n");
+		}
+		else
+		{
+			if(blockSize == 1000)
+			{
+				block = block1000;
+			}
+			else if( blockSize == 2000)
+			{
+				block = block2000;
+			}
+			else if( blockSize == 5000)
+			{
+				block = block5000;
+			}
+			else if( blockSize == 10000)
+			{
+				block = block10000;
+			}
 		}
 
 #ifdef _WIN32
@@ -165,51 +189,31 @@ int runClient(int argc, char* argv[])
 #endif			
 						}
 
-						if(blockSize == 1000)
-						{
-							 char block1000[1000] = "";
-							 block = block1000;
-						}
-						else if(blockSize == 2000)
-						{
-							char block2000[2000] = "";
-							 block = block2000;
-						}
-						else if(blockSize == 5000)
-						{
-							char block5000[5000] = "";
-							 block = block5000;
-						}
-						else if(blockSize == 10000)
-						{
-							char block10000[10000] = "";
-							 block = block10000;
-						}
-						//char* block = malloc(initialConnect.blockSize);
-						
+						//char* block = malloc(blockSize);
+						//char block[blockSize] = "";
 					
 						for(i =  0; i < numBlocks; i++)
 						{
 
-							//memset(block, '$',initialConnect.blockSize);
+							//memset(block, '\0',blockSize);
+
 
 							//block[0] = i;
-							
 
-							sprintf(block,"%d", i);
-							printf("%d  Block Size: %i\n",i,strlen(block));
-           
-								retval = send(conn_socket, block, sizeof(block), 0);
+							//printf("Block Size: %i\n", sizeof(block));
+
+							
+           						sprintf(block, "%d", i);
+								retval = send(conn_socket, block, blockSize, 0);
 								if (retval < 0) {
 									printf("send() failed: error %d\n", i);
 #ifdef _WIN32					
 									WSACleanup();
 #endif					
 									break;
-								//memset(buffer, 0, totalSize);
 							}
 						}
-						free(block);
+						//free(block);
 #ifdef _WIN32
 						closesocket(conn_socket);
 						WSACleanup();
