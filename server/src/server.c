@@ -174,7 +174,7 @@ int runServer(int argc, char *argv[])
         }
 
 
-        readClient(benchMarkSocket);
+        readClient(benchMarkSocket, benchMarchConnection.numBlocks, benchMarchConnection.blockSize);
 
 
         
@@ -224,7 +224,10 @@ void testType(socketInfo *benchMarchConnection, int serverSocket)
         * accept a packet from the client.
         * this is a blocking operation.
         */
-        printf("%s\n", "Block till client is accepted");
+        #ifdef DEBUG
+            printf("%s\n", "Block till client is accepted");
+        #endif
+
         client_len = sizeof (client_addr);
         if ((client_socket = accept (serverSocket,(struct sockaddr *)&client_addr, &client_len)) < 0) 
         {
@@ -232,7 +235,9 @@ void testType(socketInfo *benchMarchConnection, int serverSocket)
               fflush(stdout);   
         }
 
-        printf("%s\n", "Client accepted");
+        #ifdef DEBUG
+            printf("%s\n", "Client accepted");
+        #endif
 
         //get socket type, port, block size, number of blocks
         char buf[BUFSIZ] = {'\0'};
@@ -249,12 +254,7 @@ void testType(socketInfo *benchMarchConnection, int serverSocket)
                 printf ("[SERVER] : socket() recv FAILED. \nErrno returned %i\n", errno);
             }
         #endif
-        printf("%s\n", buf);
-        for(int i = 0; i < 5; i++)
-        {
-            printf("%s: %i\n", buf + i, buf[i]);
-        }
-
+       
         // Credit: https://www.w3resource.com/c-programming-exercises/string/c-string-exercise-31.php
         char newString[10][10]; 
         int j = 0;
@@ -670,7 +670,7 @@ int newSocket(int* server_socket, int sockType, int sockPort)
 *                   :
 *   Returns         : int retCode: the return value indicating the status or failure of the function
 */
-int readClient(int benchMarkSocket)
+int readClient(int benchMarkSocket, int numBlocks, int blockSize)
 {
     int     retCode         = 0;                            //The return value indicating the status or failure of the function.
     int     client_socket   = 0;                            //The client's socket, set by the accept call.
@@ -690,23 +690,34 @@ int readClient(int benchMarkSocket)
           retCode = FAILURE;
     }
 
-    printf("%s\n", "benchmark socket accepted");
-    #ifdef _WIN32
-        if (recv (client_socket, (void*)&block, sizeof(block), 0) < 0)
-        {
-            printf ("[SERVER] : socket() recv FAILED. \nErrno returned %i\n", errno);
-        }
-    #endif
-    #ifdef linux
-        if (read (client_socket, &block, sizeof(block)) < 0)
-        {
-            printf ("[SERVER] : socket() recv FAILED. \nErrno returned %i\n", errno);
-        }
-    #endif
-
     #ifdef DEBUG
-        printf("%s\n", block);
+        printf("Number of blocks is:%i, Block size is: %i\n", numBlocks, blockSize);
+        printf("\n%s\n", "benchmark socket accepted");
     #endif
+    int a = numBlocks;
+    int b = blockSize;
+    for (int i = 0; i < a; i++)
+    {
+        #ifdef _WIN32
+            if (recv (client_socket, block, b, 0) < 0)
+            {
+                printf ("[benchMarkSocket] : socket() recv FAILED. \nErrno returned %s\n", strerror(errno));
+                printf("recv failed with error: %d\n", WSAGetLastError());
+                closesocket(client_socket);
+                WSACleanup();
+            }
+        #endif
+        #ifdef linux
+            if (read (client_socket, block, blockSize) < 0)
+            {
+                printf ("[benchMarkSocket] : socket() recv FAILED. \nErrno returned %i\n", errno);
+            }
+        #endif
+
+        #ifdef DEBUG
+            printf("Read: %s\n", block);
+        #endif
+    }
 
     return retCode;
 } //end monitorClients function
