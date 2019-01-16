@@ -68,6 +68,11 @@ int runClient(int argc, char* argv[])
 			}
 		}
 
+		if(initialConnect.blockSize != 1000 && initialConnect.blockSize != 2000 && initialConnect.blockSize != 5000 && initialConnect.blockSize != 10000)
+		{
+			printf("Invalid Number of Blocks\n");
+		}
+
 #ifdef _WIN32
 		if ((retval = WSAStartup(0x202, &wsaData)) != 0) {
 			printf("WSAStartup failed with error\n");
@@ -116,42 +121,75 @@ int runClient(int argc, char* argv[])
 #endif
 
 
-
-				/*totalSize = atoi(argv[2]);
-
-				amountOfPackage = atoi(argv[3]);
-				if ((amountOfPackage == 0) || (amountOfPackage > 1000000))
+#ifdef _WIN32
+				if ((retval = WSAStartup(0x202, &wsaData)) != 0) 
 				{
-					printf("Number is invalid number\n");
+					printf("WSAStartup failed with error\n");
+					WSACleanup();
 				}
 				else
-				{
-					int i = 0;
-					//loop base on the thrid agrument
-					for (; i < amountOfPackage; i++)
-					{
-						sprintf(buffer, "%d", i);
-						retval = send(conn_socket, buffer, totalSize, 0);
-						//check to see if it was sent sucessfully
-						if (retval < 0) {
-							printf("send() failed: error %d\n", i);
-#ifdef _WIN32					
-							WSACleanup();
-#endif					
-							break;
-
-						}
-						else
-						{
-							printf("%i\n", i);
-						}
-						memset(buffer, 0, totalSize);
-					}
-#ifdef _WIN32
-					closesocket(conn_socket);
-					WSACleanup();
 #endif
-				}*/
+				{
+					
+					server.sin_family = AF_INET;
+					server.sin_port = htons(initialConnect.userPort);
+					server.sin_addr.s_addr = inet_addr(serverIP);
+
+					if(initialConnect.socketType == SOCK_STREAM)
+					{
+						conn_socket = socket(AF_INET, SOCK_STREAM, 0);
+					}
+					else 
+					{
+						conn_socket = socket(AF_INET, SOCK_DGRAM, 0);
+					} 
+					if (conn_socket < 0) 
+					{
+						printf("Client: Error Opening socket: Error\n");
+#ifdef _WIN32				
+						WSACleanup();
+#endif
+					}
+
+					else
+					{
+						if (connect(conn_socket, (struct sockaddr*)&server, sizeof(server)) < 0) 
+						{
+							printf("connect() failed: %s \n", serverIP);
+#ifdef _WIN32									
+							WSACleanup();
+#endif			
+						}
+						int y = 0;
+
+						for(y =  0; y < initialConnect.numBlocks; y++)
+						{
+							for (i = 0; i < initialConnect.blockSize; i++)
+							{
+								sprintf(buffer, "%d of %s", i, numBlocks);
+								printf("%s\n", buffer );
+								retval = send(conn_socket, buffer, initialConnect.numBlocks, 0);
+								if (retval < 0) {
+									printf("send() failed: error %d\n", i);
+#ifdef _WIN32					
+									WSACleanup();
+#endif					
+									break;
+
+								}
+								else
+								{
+									printf("%i\n", i);
+								}
+								//memset(buffer, 0, totalSize);
+							}
+						}
+#ifdef _WIN32
+						closesocket(conn_socket);
+						WSACleanup();
+					}
+#endif
+				}
 			}
 		}
 	}
