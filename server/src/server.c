@@ -216,9 +216,24 @@ void testType(socketInfo *testConnection, int serverSocket)
         //get socket type, port, block size, number of blocks
         char buf[BUFSIZ] = {'\0'};
         //read (client_socket, socketDetails, sizeof(socketDetails));
-        int test = recv (client_socket, (char*)&socketDetails, sizeof(socketDetails), 0);
-        printf("%i\n", test);
-        // printf("Read [%s] from client\n", socketDetails);
+        #ifdef _WIN32
+            if (recv (client_socket, (void*)&socketDetails, sizeof(socketInfo), 0) < 0)
+            {
+                printf ("[SERVER] : socket() recv FAILED. \nErrno returned %i\n", errno);
+            }
+        #endif
+        #ifdef linux
+            if (read (client_socket, &buf, sizeof(buf)) < 0)
+            {
+                printf ("[SERVER] : socket() recv FAILED. \nErrno returned %i\n", errno);
+            }
+        #endif
+        printf("%s\n", buf);
+        for(int i = 0; i < 5; i++)
+        {
+            printf("%s: %i\n", buf + i, buf[i]);
+        }
+
         // Credit: https://www.w3resource.com/c-programming-exercises/string/c-string-exercise-31.php
         char newString[10][10]; 
         int j = 0;
