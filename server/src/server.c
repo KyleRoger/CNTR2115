@@ -214,10 +214,11 @@ void testType(socketInfo *testConnection, int serverSocket)
         printf("%s\n", "Client accepted");
 
         //get socket type, port, block size, number of blocks
-        //read (client_socket, buf, sizeof(buf));
         char buf[BUFSIZ] = {'\0'};
-        recv (client_socket, socketDetails, 1024, 0);
-        printf("Read [%s] from client\n", buf);
+        //read (client_socket, socketDetails, sizeof(socketDetails));
+        int test = recv (client_socket, (char*)&socketDetails, sizeof(socketDetails), 0);
+        printf("%i\n", test);
+        // printf("Read [%s] from client\n", socketDetails);
         // Credit: https://www.w3resource.com/c-programming-exercises/string/c-string-exercise-31.php
         char newString[10][10]; 
         int j = 0;
