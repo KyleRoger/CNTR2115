@@ -9,9 +9,18 @@ int runClient(int argc, char* argv[])
 	socketInfo initialConnect;
 	int port = 15000;
 	int i =0;
+	int socketType = 0;
+	int userPort = 0;
+	int numBlocks = 0;
+	int blockSize = 0;
+	char* block = NULL;
 	char* serverIP = NULL;
 	int retval = 0;
 	char * buffer = NULL;
+	char block1000[1000] = "";
+	char block2000[2000] = "";
+	char block5000[5000] = "";
+	char block10000[10000] = "";
 	char buf[BUFSIZ] = {'\0'};
 	int totalSize = 0;
 	unsigned int addr;
@@ -37,13 +46,13 @@ int runClient(int argc, char* argv[])
 				// buf = (int)SOCK_STREAM;
 				strcpy(buf, "1");
 				strcat(buf, " ");
-				initialConnect.socketType = SOCK_STREAM;
+				socketType = SOCK_STREAM;
 			}
 			else if(strcmp(argv[i],"-UDP") == 0)
 			{
 				strcpy(buf, "2");
 				strcat(buf, " ");
-				initialConnect.socketType = SOCK_DGRAM;
+				socketType = SOCK_DGRAM;
 			}
 			else if(strcmp(argv[i], "-a") ==0)
 			{
@@ -53,24 +62,43 @@ int runClient(int argc, char* argv[])
 			{
 				strcat(buf, argv[i+1]);
 				strcat(buf, " ");
-				initialConnect.userPort = atoi(argv[i+1]);
+				userPort = atoi(argv[i+1]);
 			}
 			else if(strcmp(argv[i],"-s") == 0)
 			{
 				strcat(buf, argv[i+1]);
 				strcat(buf, " ");
-				initialConnect.blockSize = atoi(argv[i+1]);
+				blockSize = atoi(argv[i+1]);
 			}
 			else if(strcmp(argv[i],"-n") == 0)
 			{
 				strcat(buf, argv[i+1]);
-				initialConnect.numBlocks = atoi(argv[i+1]);
+				numBlocks = atoi(argv[i+1]);
 			}
 		}
 
-		if(initialConnect.blockSize != 1000 && initialConnect.blockSize != 2000 && initialConnect.blockSize != 5000 && initialConnect.blockSize != 10000)
+		if(blockSize != 1000 && blockSize != 2000 && blockSize != 5000 && blockSize != 10000)
 		{
 			printf("Invalid Number of Blocks\n");
+		}
+		else
+		{
+			if(blockSize == 1000)
+			{
+				block = block1000;
+			}
+			else if( blockSize == 2000)
+			{
+				block = block2000;
+			}
+			else if( blockSize == 5000)
+			{
+				block = block5000;
+			}
+			else if( blockSize == 10000)
+			{
+				block = block10000;
+			}
 		}
 
 #ifdef _WIN32
@@ -105,10 +133,10 @@ int runClient(int argc, char* argv[])
 #endif			
 				}
 
-				printf("%i\n", initialConnect.socketType);
+/*				printf("%i\n", initialConnect.socketType);
 				printf("%i\n", initialConnect.userPort);
 				printf("%i\n", initialConnect.blockSize);
-				printf("%i\n", initialConnect.numBlocks);
+				printf("%i\n", initialConnect.numBlocks);*/
 				/*strcpy(buf, initialConnect.socketType);
 				strcat(buf, " ");
 				strcat(buf, initialConnect.userPort);*/
@@ -132,10 +160,10 @@ int runClient(int argc, char* argv[])
 				{
 					
 					server.sin_family = AF_INET;
-					server.sin_port = htons(initialConnect.userPort);
+					server.sin_port = htons(userPort);
 					server.sin_addr.s_addr = inet_addr(serverIP);
 
-					if(initialConnect.socketType == SOCK_STREAM)
+					if(socketType == SOCK_STREAM)
 					{
 						conn_socket = socket(AF_INET, SOCK_STREAM, 0);
 					}
@@ -161,28 +189,31 @@ int runClient(int argc, char* argv[])
 #endif			
 						}
 
-						char block = malloc(initialConnect.blockSize);
+						//char* block = malloc(blockSize);
+						//char block[blockSize] = "";
 					
-						for(i =  0; i < initialConnect.numBlocks; i++)
+						for(i =  0; i < numBlocks; i++)
 						{
 
-							memset(block, '\0',initialConnect.blockSize);
+							//memset(block, '\0',blockSize);
 
-							strcpy(block,i);
-           
-								//sprintf(buffer, "%d of %s", i, initialConnect.numBlocks);
-								//printf("%s\n", buffer );
-								retval = send(conn_socket, block, sizeof(block), 0);
+
+							//block[0] = i;
+
+							//printf("Block Size: %i\n", sizeof(block));
+
+							
+           						sprintf(block, "%d", i);
+								retval = send(conn_socket, block, blockSize, 0);
 								if (retval < 0) {
 									printf("send() failed: error %d\n", i);
 #ifdef _WIN32					
 									WSACleanup();
 #endif					
 									break;
-								//memset(buffer, 0, totalSize);
 							}
 						}
-						free(block);
+						//free(block);
 #ifdef _WIN32
 						closesocket(conn_socket);
 						WSACleanup();
