@@ -22,7 +22,6 @@ int runClient(int argc, char* argv[])
 	char block5000[5000] = "";
 	char block10000[10000] = "";
 	char buf[BUFSIZ] = {'\0'};
-	int totalSize = 0;
 	unsigned int addr;
 	struct sockaddr_in server;
 
@@ -30,7 +29,7 @@ int runClient(int argc, char* argv[])
 	WSADATA wsaData;
 	SOCKET  inital_socket, message_socket;
 #endif
-#ifdef Linux
+#ifdef _linux_
 	int initial_socket = 0;
 	int message_socket = 0;
 #endif
@@ -190,32 +189,20 @@ int runClient(int argc, char* argv[])
 							WSACleanup();
 #endif			
 						}
-
-						//char* block = malloc(blockSize);
-						//char block[blockSize] = "";
 					
 						for(i =  0; i < numBlocks; i++)
 						{
-
-							//memset(block, '\0',blockSize);
-
-
-							//block[0] = i;
-
-							//printf("Block Size: %i\n", sizeof(block));
-
-							
-           						sprintf(block, "%d", i);
-           						printf("%s", block);
-								retval = send(message_socket, block, blockSize, 0);
-								if (retval < 0) 
-								{
-									printf("send() failed: error %d\n", i);
+           					sprintf(block, "%d", i);
+           					printf("%s", block);
+							retval = send(message_socket, block, blockSize, 0);
+							if (retval < 0) 
+							{
+								printf("send() failed: error %d\n", i);
 #ifdef _WIN32					
-									WSACleanup();
+								WSACleanup();
 #endif					
-									break;
-								}
+								break;
+							}
 						}
 						strcpy(buf, "Bye");
 						retval = send(inital_socket, buf, sizeof(buf), 0);
@@ -232,7 +219,7 @@ int runClient(int argc, char* argv[])
 						closesocket(inital_socket);
 						WSACleanup();					
 #endif
-#ifdef Linux
+#ifdef _linux_
 						close(message_socket);
 						close(initial_socket);
 #endif
