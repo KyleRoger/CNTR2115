@@ -10,10 +10,10 @@
 
 
 
-SRC = ./src/client.c ./src/clientSupport.c
-OBJ = ./obj/client.o ./obj/clientSupport.o
-STD_HEADERS=./inc/client.h ../common/inc/struct.h ../common/inc/protocol.h
-EXE = ./bin/chat-client
+SRC = ./src/mian.c ./src/client.c
+OBJ = ./obj/main.o ./obj/client.o
+STD_HEADERS=./inc/client.h ../common/inc/struct.h ../common/inc/protocol.h ../common/inc/ispeedSockets.h ../common/inc/ispeed.h
+EXE = ./bin/ispeed
 CFLAGS=-c -Werror
 CC = cc
 LDFLAGS = -o
@@ -46,7 +46,7 @@ $(EXE) : $(OBJ)
 # guessTheNumber application depends on.
 #===================================================================
 
-./obj/client.o : ./src/client.c $(STD_HEADERS)
+./obj/main.o : ./src/main.c $(STD_HEADERS)
 	$(CC) -g $(CFLAGS) $< $(LDFLAGS) $@
 
 
@@ -56,7 +56,7 @@ $(EXE) : $(OBJ)
 # application is dependant on.
 #===================================================================
 
-./obj/clientSupport.o : ./src/clientSupport.c $(STD_HEADERS)
+./obj/client.o : ./src/client.c $(STD_HEADERS)
 	$(CC) -g $(CFLAGS) $< $(LDFLAGS) $@
 
 
