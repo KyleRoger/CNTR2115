@@ -157,25 +157,45 @@ int runServer(int argc, char *argv[])
         //Create a socket for benmarking
         newSocket(&benchMarkSocket, benchMarchConnection.socketType, benchMarchConnection.userPort);
 
-        if(benchMarchConnection.socketType == SOCK_STREAM)
+        while (exitFlag == 0)
         {
-            /*
-            * start listening on the socket
-            */
-            if (listen (benchMarkSocket, 10) < 0) 
+            if(benchMarchConnection.socketType == SOCK_STREAM)
             {
-                printf ("[SERVER] : listen() - FAILED.\n");     
-                close (benchMarkSocket);   
+                /*
+                * start listening on the socket
+                */
+                if (listen (benchMarkSocket, 10) < 0) 
+                {
+                    printf ("[SERVER] : listen() - FAILED.\n");     
+                    close (benchMarkSocket);   
+                }
+                else
+                {
+                    status = FAILURE;
+                }
             }
-            else
+
+            readClient(benchMarkSocket, benchMarchConnection.numBlocks, benchMarchConnection.blockSize);
+
+           /* char buf[BUFSIZ] = {'\0'};
+            //read (client_socket, socketDetails, sizeof(socketDetails));
+            #ifdef _WIN32
+                if (recv (client_socket, (void*)&buf, sizeof(buf), 0) < 0)
+                {
+                    printf ("[SERVER] : socket() recv FAILED. \nErrno returned %i\n", errno);
+                }
+            #endif
+            #ifdef linux
+                if (read (client_socket, &buf, sizeof(buf)) < 0)
+                {
+                    printf ("[SERVER] : socket() recv FAILED. \nErrno returned %i\n", errno);
+                }
+            #endif
+            if (strcmp(buf, "bye"))
             {
-                status = FAILURE;
-            }
+                exitFlag = 1;
+            }*/
         }
-
-
-        readClient(benchMarkSocket, benchMarchConnection.numBlocks, benchMarchConnection.blockSize);
-
 
         
 
