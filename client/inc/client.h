@@ -15,9 +15,6 @@
 #include "../../common/inc/protocol.h"
 #include "../../common/inc/ispeed.h"
 #include "../../common/inc/ispeedSockets.h"
-#define WIN32_LEAN_AND_MEAN
-#include <winsock2.h>
-#include <Ws2tcpip.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
