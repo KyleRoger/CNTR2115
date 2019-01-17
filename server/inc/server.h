@@ -15,6 +15,7 @@
 #include "../../common/inc/protocol.h"
 #include "../../common/inc/ispeed.h"
 #include "../../common/inc/ispeedSockets.h"
+#include <time.h>
 
 #ifdef linux
 	#include <ifaddrs.h>
@@ -41,7 +42,7 @@ int __cdecl windowsSockets(void);
 int newSocket(int* server_socket, int sockType, int sockPort);
 int intSocket(void);
 int closeSocket(int server_socket);
-int readClient(int benchMarkSocket);
+int readClient(int benchMarkSocket, int numBlocks, int blockSize);
 void *socketThread(void *clientSocket);
 int monitorClients(dataStruct *infoStruct);
 void showHelp(char** argv);
