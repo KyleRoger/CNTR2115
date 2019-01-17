@@ -694,12 +694,17 @@ int readClient(int benchMarkSocket, int numBlocks, int blockSize)
         printf("Number of blocks is:%i, Block size is: %i\n", numBlocks, blockSize);
         printf("\n%s\n", "benchmark socket accepted");
     #endif
-    int a = numBlocks;
-    int b = blockSize;
-    for (int i = 0; i < a; i++)
+    int num = numBlocks;
+    int size = blockSize;
+
+    // Start timer
+    float startTime = (float)clock()/CLOCKS_PER_SEC;
+
+    //read the data from the socket
+    for (int i = 0; i < num; i++)
     {
         #ifdef _WIN32
-            if (recv (client_socket, block, b, 0) < 0)
+            if (recv (client_socket, block, size, 0) < 0)
             {
                 printf ("[benchMarkSocket] : socket() recv FAILED. \nErrno returned %s\n", strerror(errno));
                 printf("recv failed with error: %d\n", WSAGetLastError());
@@ -708,7 +713,7 @@ int readClient(int benchMarkSocket, int numBlocks, int blockSize)
             }
         #endif
         #ifdef linux
-            if (read (client_socket, block, blockSize) < 0)
+            if (read (client_socket, block, size) < 0)
             {
                 printf ("[benchMarkSocket] : socket() recv FAILED. \nErrno returned %i\n", errno);
             }
@@ -718,6 +723,11 @@ int readClient(int benchMarkSocket, int numBlocks, int blockSize)
             printf("Read: %s\n", block);
         #endif
     }
+
+    float endTime = (float)clock()/CLOCKS_PER_SEC;
+
+    float elapsedTime = endTime - startTime;
+    printf("The measured time is: %f\n", elapsedTime);
 
     return retCode;
 } //end monitorClients function

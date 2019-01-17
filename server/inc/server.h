@@ -15,6 +15,7 @@
 #include "../../common/inc/protocol.h"
 #include "../../common/inc/ispeed.h"
 #include "../../common/inc/ispeedSockets.h"
+#include <time.h>
 
 #ifdef linux
 	#include <ifaddrs.h>
