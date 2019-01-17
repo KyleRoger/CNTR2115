@@ -24,7 +24,7 @@
 
 
 /********PROTOTYPES*******/
-
+int runClient(int argc, char* argv[]);
 
 
 /********CONSTANTS*******/

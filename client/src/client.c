@@ -27,9 +27,9 @@ int runClient(int argc, char* argv[])
 
 #ifdef _WIN32
 	WSADATA wsaData;
-	SOCKET  inital_socket, message_socket;
+	SOCKET  initial_socket, message_socket;
 #endif
-#ifdef _linux_
+#ifdef linux
 	int initial_socket = 0;
 	int message_socket = 0;
 #endif
@@ -120,8 +120,8 @@ int runClient(int argc, char* argv[])
 			server.sin_port = htons(port);
 			server.sin_addr.s_addr = inet_addr(serverIP);
 
-			inital_socket = socket(AF_INET, SOCK_STREAM, 0); 
-			if (inital_socket < 0) 
+			initial_socket = socket(AF_INET, SOCK_STREAM, 0); 
+			if (initial_socket < 0) 
 			{
 				printf("Client: Error Opening socket: Error\n");
 #ifdef _WIN32				
@@ -131,7 +131,7 @@ int runClient(int argc, char* argv[])
 
 			else
 			{
-				if (connect(inital_socket, (struct sockaddr*)&server, sizeof(server)) < 0) 
+				if (connect(initial_socket, (struct sockaddr*)&server, sizeof(server)) < 0) 
 				{
 					printf("connect() failed: %s \n", serverIP);
 #ifdef _WIN32									
@@ -139,7 +139,7 @@ int runClient(int argc, char* argv[])
 #endif			
 				}
 				printf("buf is: %s\n", buf);
-				retval = send(inital_socket, buf, sizeof(buf), 0);
+				retval = send(initial_socket, buf, sizeof(buf), 0);
 				if (retval < 0) 
 				{
 					printf("send() failed: error %d\n", i);
@@ -205,7 +205,7 @@ int runClient(int argc, char* argv[])
 							}
 						}
 						strcpy(buf, "Bye");
-						retval = send(inital_socket, buf, sizeof(buf), 0);
+						retval = send(initial_socket, buf, sizeof(buf), 0);
 						if (retval < 0) 
 								{
 									printf("send() failed: error %d\n", i);
@@ -216,10 +216,10 @@ int runClient(int argc, char* argv[])
 								}
 #ifdef _WIN32
 						closesocket(message_socket);
-						closesocket(inital_socket);
+						closesocket(initial_socket);
 						WSACleanup();					
 #endif
-#ifdef _linux_
+#ifdef linux
 						close(message_socket);
 						close(initial_socket);
 #endif

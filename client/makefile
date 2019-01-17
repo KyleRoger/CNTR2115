@@ -37,7 +37,7 @@ RM_SRC=rm -f ./src/*.c~
 #===================================================================
 
 $(EXE) : $(OBJ)
-	$(CC) $(OBJ) -g -lncurses -o $@ $(THREAD_FLAGS)
+	$(CC) $(OBJ) -g -o $@ $(THREAD_FLAGS)
 
 
 
