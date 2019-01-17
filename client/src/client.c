@@ -28,8 +28,13 @@ int runClient(int argc, char* argv[])
 
 #ifdef _WIN32
 	WSADATA wsaData;
-	SOCKET  conn_socket;
+	SOCKET  inital_socket, message_socket;
 #endif
+#ifdef Linux
+	int initial_socket = 0;
+	int message_socket = 0;
+#endif
+
 	if (argc != 10)
 	{
 		printf("Not correct amount of Agruments");
@@ -80,6 +85,7 @@ int runClient(int argc, char* argv[])
 		if(blockSize != 1000 && blockSize != 2000 && blockSize != 5000 && blockSize != 10000)
 		{
 			printf("Invalid Number of Blocks\n");
+			return 0;
 		}
 		else
 		{
@@ -102,7 +108,8 @@ int runClient(int argc, char* argv[])
 		}
 
 #ifdef _WIN32
-		if ((retval = WSAStartup(0x202, &wsaData)) != 0) {
+		if ((retval = WSAStartup(MAKEWORD(2,2), &wsaData)) != 0) 
+		{
 			printf("WSAStartup failed with error\n");
 			WSACleanup();
 		}
@@ -114,8 +121,8 @@ int runClient(int argc, char* argv[])
 			server.sin_port = htons(port);
 			server.sin_addr.s_addr = inet_addr(serverIP);
 
-			conn_socket = socket(AF_INET, SOCK_STREAM, 0); 
-			if (conn_socket < 0) 
+			inital_socket = socket(AF_INET, SOCK_STREAM, 0); 
+			if (inital_socket < 0) 
 			{
 				printf("Client: Error Opening socket: Error\n");
 #ifdef _WIN32				
@@ -125,32 +132,27 @@ int runClient(int argc, char* argv[])
 
 			else
 			{
-				if (connect(conn_socket, (struct sockaddr*)&server, sizeof(server)) < 0) 
+				if (connect(inital_socket, (struct sockaddr*)&server, sizeof(server)) < 0) 
 				{
 					printf("connect() failed: %s \n", serverIP);
 #ifdef _WIN32									
 					WSACleanup();
 #endif			
 				}
-
-/*				printf("%i\n", initialConnect.socketType);
-				printf("%i\n", initialConnect.userPort);
-				printf("%i\n", initialConnect.blockSize);
-				printf("%i\n", initialConnect.numBlocks);*/
-				/*strcpy(buf, initialConnect.socketType);
-				strcat(buf, " ");
-				strcat(buf, initialConnect.userPort);*/
 				printf("buf is: %s\n", buf);
-				retval = send(conn_socket, buf, sizeof(buf), 0);
+				retval = send(inital_socket, buf, sizeof(buf), 0);
+				if (retval < 0) 
+				{
+					printf("send() failed: error %d\n", i);
+#ifdef _WIN32					
+					WSACleanup();
+#endif					
+					return 0;
+				}
+
 
 #ifdef _WIN32
-				closesocket(conn_socket);
-				WSACleanup();
-#endif
-
-
-#ifdef _WIN32
-				if ((retval = WSAStartup(0x202, &wsaData)) != 0) 
+				if ((retval = WSAStartup(MAKEWORD(2,2), &wsaData)) != 0) 
 				{
 					printf("WSAStartup failed with error\n");
 					WSACleanup();
@@ -165,13 +167,13 @@ int runClient(int argc, char* argv[])
 
 					if(socketType == SOCK_STREAM)
 					{
-						conn_socket = socket(AF_INET, SOCK_STREAM, 0);
+						message_socket = socket(AF_INET, SOCK_STREAM, 0);
 					}
 					else 
 					{
-						conn_socket = socket(AF_INET, SOCK_DGRAM, 0);
+						message_socket = socket(AF_INET, SOCK_DGRAM, 0);
 					} 
-					if (conn_socket < 0) 
+					if (message_socket < 0) 
 					{
 						printf("Client: Error Opening socket: Error\n");
 #ifdef _WIN32				
@@ -181,7 +183,7 @@ int runClient(int argc, char* argv[])
 
 					else
 					{
-						if (connect(conn_socket, (struct sockaddr*)&server, sizeof(server)) < 0) 
+						if (connect(message_socket, (struct sockaddr*)&server, sizeof(server)) < 0) 
 						{
 							printf("connect() failed: %s \n", serverIP);
 #ifdef _WIN32									
@@ -204,21 +206,37 @@ int runClient(int argc, char* argv[])
 
 							
            						sprintf(block, "%d", i);
-								retval = send(conn_socket, block, blockSize, 0);
-								if (retval < 0) {
+           						printf("%s", block);
+								retval = send(message_socket, block, blockSize, 0);
+								if (retval < 0) 
+								{
 									printf("send() failed: error %d\n", i);
 #ifdef _WIN32					
 									WSACleanup();
 #endif					
 									break;
-							}
+								}
 						}
-						//free(block);
+						strcpy(buf, "Bye");
+						retval = send(inital_socket, buf, sizeof(buf), 0);
+						if (retval < 0) 
+								{
+									printf("send() failed: error %d\n", i);
+#ifdef _WIN32					
+									WSACleanup();
+#endif					
+									return 0;
+								}
 #ifdef _WIN32
-						closesocket(conn_socket);
-						WSACleanup();
-					}
+						closesocket(message_socket);
+						closesocket(inital_socket);
+						WSACleanup();					
 #endif
+#ifdef Linux
+						close(message_socket);
+						close(initial_socket);
+#endif
+					}
 				}
 			}
 		}
@@ -227,3 +245,11 @@ int runClient(int argc, char* argv[])
 	return 0;
 }
 
+
+/*int GetConnection()
+{
+
+			server.sin_family = AF_INET;
+			server.sin_port = htons(port);
+			server.sin_addr.s_addr = inet_addr(serverIP);
+}*/
