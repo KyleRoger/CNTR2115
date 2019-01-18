@@ -8,7 +8,7 @@
 * Description 	: This makefile will compile and link all source files
 *             	: in the server part of the system.  
 *				: 
-*				: Steps for creating windows sockets on server.
+*				: Steps for creating windows TCP sockets on server.
 *				   1. Initialize Winsock.
 *				   2. Create a socket.
 *				   3. Bind the socket.
@@ -25,14 +25,13 @@
 
 #undef UNICODE
 
-static int numClients = 0;  //used to track the number of clients attached.
 int exitFlag = 0;
 
 
 /*  
 *   Function Name   : getIP(void)
 *                   :
-*   Description     : This function gets the IP address of the computer.
+*   Description     : This function gets the IP address of the computer and prints it to the screen.
 *                   : 
 *   Parameters      : N/A
 *                   :
@@ -103,38 +102,32 @@ void getIP(void)
 *                   :
 *   Description     : This function does most of the coordinating and calls the shots.
 *                   : The basic flow of things is, create and bind to a socket, listen on that socket,
-*                   : create a thread for each new client and lastly join threads, close sockets and leave.
+*                   : 
 *                   : 
 *   Parameters      : N/A
 *                   :
-*   Returns         : int retCode: the return value indicating the status or failure of the function
+*   Returns         : int status: the return value indicating the success or failure of the function
 */
 int runServer(int argc, char *argv[])
 {
 	int status = FAILURE;
+
     #ifdef _WIN32
-        SOCKET serverSocket = 0;          //This is the socket used by the server
-        SOCKET clientSocket = 0;          //the client socket ID
-        SOCKET testSocket = 0;
-        SOCKET benchMarkSocket = 0;        //The socket used for benchmark tests
+        SOCKET connectInfoSocket = 0;           //This is the socket used by the server to get information about the benchmarking socket
+        SOCKET benchMarkSocket = 0;             //The socket used for benchmark tests
     #endif
     #ifdef linux
-        int serverSocket = 0;           //This is the socket used by the server
-        int clientSocket = 0;           //the client socket ID
-        int benchMarkSocket = 0;        //The socket used for benchmark tests
+        int connectInfoSocket = 0;              //This is the socket used by the server to get information about the benchmarking socket
+        int benchMarkSocket = 0;                //The socket used for benchmark tests
     #endif
-    int socketPort = 15000;
-    int socketType = SOCK_STREAM;
-    char buffer[BUFSIZ];            // used for accepting incoming command and also holding the command's response
-    socketInfo benchMarchConnection;
-    int bind_value;
-    int fromlen;
-    struct sockaddr_in local;
-    struct sockaddr_in from;
 
-    getIP();
+    int connectInfoPort = DEFAULT_PORT;
+    int socketType = DEFAULT_SOCK_TYPE;
+    socketInfo benchMarkConnection;             //Struct used to store connection details for the benchmark socket
+  
+    getIP();                                    //Display the server ipv4 address
 
-    if ((socketPort = parseCmdLine(argc, argv)) != INVALID_PARMS)
+    if ((connectInfoPort = parseCmdLine(argc, argv)) != INVALID_PARMS)
     {
         
         #ifdef _WIN32
@@ -142,76 +135,59 @@ int runServer(int argc, char *argv[])
         #endif
 
         //set up a new socket and bind to it
-        newSocket(&serverSocket, socketType, socketPort);
+        newSocket(&connectInfoSocket, socketType, connectInfoPort);
 
-        testType(&benchMarchConnection, serverSocket);
+        testType(&benchMarkConnection, connectInfoSocket);
 
         #ifdef DEBUG
         printf("%s\n", "Test connection details"); 
-        printf("Socket is: %i\n", benchMarchConnection.socketType);
-        printf("Port is: %i\n", benchMarchConnection.userPort);
-        printf("Block size is: %i\n", benchMarchConnection.blockSize);
-        printf("Number of blocks is: %i\n", benchMarchConnection.numBlocks);
-        #endif
-
-        //Create a socket for benmarking
-        newSocket(&benchMarkSocket, benchMarchConnection.socketType, benchMarchConnection.userPort);
+        printf("Socket is: %i\n", benchMarkConnection.socketType);
+        printf("Port is: %i\n", benchMarkConnection.userPort);
+        printf("Block size is: %i\n", benchMarkConnection.blockSize);
+        printf("Number of blocks is: %i\n", benchMarkConnection.numBlocks);
+        #endif   
 
         while (exitFlag == 0)
         {
-            if(benchMarchConnection.socketType == SOCK_STREAM)
+            if(benchMarkConnection.socketType == SOCK_STREAM)
             {
+                //Create a socket for benmarking
+                newSocket(&benchMarkSocket, benchMarkConnection.socketType, benchMarkConnection.userPort);  
+
                 /*
                 * start listening on the socket
                 */
                 if (listen (benchMarkSocket, 10) < 0) 
                 {
                     printf ("[SERVER] : listen() - FAILED.\n");     
-                    close (benchMarkSocket);   
+                    status = FAILURE;
                 }
                 else
                 {
-                    status = FAILURE;
+                    readClient(benchMarkSocket, benchMarkConnection.numBlocks, benchMarkConnection.blockSize, benchMarkConnection.socketType);
+                    status = SUCCESS;
                 }
+
             }
 
-            readClient(benchMarkSocket, benchMarchConnection.numBlocks, benchMarchConnection.blockSize);
 
-           /* char buf[BUFSIZ] = {'\0'};
-            //read (client_socket, socketDetails, sizeof(socketDetails));
             #ifdef _WIN32
-                if (recv (client_socket, (void*)&buf, sizeof(buf), 0) < 0)
-                {
-                    printf ("[SERVER] : socket() recv FAILED. \nErrno returned %i\n", errno);
-                }
+                // cleanup
+                closesocket(connectInfoSocket);
+                status = WSACleanup();
             #endif
+
             #ifdef linux
-                if (read (client_socket, &buf, sizeof(buf)) < 0)
-                {
-                    printf ("[SERVER] : socket() recv FAILED. \nErrno returned %i\n", errno);
-                }
+                //shut server down
+                close(connectInfoSocket);
             #endif
-            if (strcmp(buf, "bye"))
-            {
-                exitFlag = 1;
-            }*/
+
+            exitFlag = 1;
         }
-
-        
-
-        //check for clients
-        //monitorClients(&clientInfo);
-
-        #ifdef _WIN32
-            // cleanup
-            closesocket(serverSocket);
-            status = WSACleanup();
-        #endif
-
-        #ifdef linux
-            //shut server down
-            close(serverSocket);
-        #endif
+    }
+    else
+    {
+        status = FAILURE;
     }
 
 	return status;
@@ -219,24 +195,26 @@ int runServer(int argc, char *argv[])
 
 
 
-void testType(socketInfo *benchMarchConnection, int serverSocket)
+void testType(socketInfo *benchMarkConnection, int connectInfoSocket)
 {
 
-    socketInfo* socketDetails = (socketInfo*) benchMarchConnection;
+    socketInfo* socketDetails = (socketInfo*) benchMarkConnection;
     int     client_socket   = 0;                            //The client's socket, set by the accept call.
     int     client_len      = 0;                            //The size of the client_addr struct.
     struct  sockaddr_in client_addr;                        //Struct with details about client socket.
     //char buf[BUFSIZ];
 
+    #ifdef DEBUG
     printf("%s\n", "Check for type of test connection");
+    #endif
 
     /*
     * start listening on the socket
     */
-    if (listen (serverSocket, 10) < 0) 
+    if (listen (connectInfoSocket, 10) < 0) 
     {
         printf ("[SERVER] : listen() - FAILED.\n");     
-        close (serverSocket);   
+        close (connectInfoSocket);   
     }
     else
     {
@@ -249,7 +227,7 @@ void testType(socketInfo *benchMarchConnection, int serverSocket)
         #endif
 
         client_len = sizeof (client_addr);
-        if ((client_socket = accept (serverSocket,(struct sockaddr *)&client_addr, &client_len)) < 0) 
+        if ((client_socket = accept (connectInfoSocket,(struct sockaddr *)&client_addr, &client_len)) < 0) 
         {
               printf ("[SERVER] : accept() FAILED\n");
               fflush(stdout);   
@@ -266,6 +244,7 @@ void testType(socketInfo *benchMarchConnection, int serverSocket)
             if (recv (client_socket, (void*)&buf, sizeof(buf), 0) < 0)
             {
                 printf ("[SERVER] : socket() recv FAILED. \nErrno returned %i\n", errno);
+                printf("recv failed with error: %d\n", WSAGetLastError());
             }
         #endif
         #ifdef linux
@@ -328,310 +307,19 @@ int initSocket(void)
         }
         else
         {
-            printf("%s\n", "Winsock initialized"); 
+            #ifdef DEBUG
+                printf("%s\n", "Winsock initialized"); 
+            #endif
+
             statusState = SUCCESS;
         }
-    #endif
-
-
-
-/*
-    // Create a socket
-    #ifdef _WIN32
-        SOCKET serverSocket = socket(AF_INET, socketType, 0);
-    #endif
-
-    #ifdef linux
-        int serverSocket = socket(AF_INET, socketType, 0);
-    #endif
-
-    if (serverSocket == INVALID_SOCKET)
-    {
-        printf ("[SERVER] : socket() FAILED. \nErrno returned %i\n", errno);
-        statusState = FAILURE;
-        #ifdef _WIN32
-            WSACleanup();
-        #endif
-    }
-    
-
-
-
-    // Bind ip to socket
-    socketaddr_in hint;
-    hint.sin_family = AF_INET;
-    hint.sin_port = htons(socketPort);
-    //inet_pton(AF_INET, ipAddress, &hint.sin_addr);
-    //inet_pton(AF_INET, "0.0.0.0", &hint.sin_addr);
-    hint.sin_addr.s_un.s_addr = INADDR_ANY;
-
-    bind (serverSocket, (sockaddr*)&hint, sizeof(hint));
-
-    // Tell winsock the socket is for listening
-    listen(serverSocket, SOMAXCONN);
-
-    // Wait for a connection 
-    sockaddr_in client;
-    int clientSize = sizeof(client);
-    //socklen_t clientSize = sizeof(client);
-
-    socket clientSocket = accept (serverSocket, (sockaddr*)&client, &clientSize);
-
-    if (clientSocket == INVALID_SOCKET)
-    {
-
-    }
-
-    char host[NI_MAXHOST]       // client's remote name
-    char service[NI_MAXHOST];   // Servic (i.e. port) the client is connected on
-
-    ZeroMemory(host, NI_MAXHOST); 
-    ZeroMemory(service, NI_MAXHOST);
-
-    if (getnameinfo((sockaddr*)&client, sizeof(client), host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0)
-    {
-        printf("%s %i\n", "Connected on port: ", service);
-    }
-    else
-    {
-        inet_ntop(AF_INET, &client.sin_addr, host, NI_MAXHOST);
-        printf("%s %i\n", "Connected on post: ", ntohs(client.sin_port));
-    }
-    // Close listening socket
-    closesocket(serverSocket);
-
-    // While loop: accept messages from client
-
-    // close the socket
-
-    // Shutdown winsock*/
-
-
-    
-
-    #ifdef linux
-
     #endif
 
     return statusState;
 }
 
-int closeSocket(int clSocket)
-{
-    int retCode = 0;
-
-    #ifdef _WIN32
-        // cleanup
-        closesocket(clSocket);
-    #endif
-
-    #ifdef linux
-        //shut server down
-        close(clSocket);
-    #endif
-
-    return retCode;
-}
-
-#ifdef _WIN32
-int __cdecl windowsSockets(void) 
-{
-    WSADATA wsaData;
-    int iResult;
-
-    SOCKET ListenSocket = INVALID_SOCKET;
-    SOCKET ClientSocket = INVALID_SOCKET;
-
-    struct addrinfo *result = NULL;
-    struct addrinfo hints;
-
-    int iSendResult;
-    char recvbuf[DEFAULT_BUFLEN];
-    int recvbuflen = DEFAULT_BUFLEN;
-    
-    // Initialize Winsock
-    iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
-    if (iResult != 0) {
-        printf("WSAStartup failed with error: %d\n", iResult);
-        return 1;
-    }
-
-    ZeroMemory(&hints, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-    hints.ai_flags = AI_PASSIVE;
-
-    // Resolve the server address and port
-    iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
-    if ( iResult != 0 ) {
-        printf("getaddrinfo failed with error: %d\n", iResult);
-        WSACleanup();
-        return 1;
-    }
-
-    // Create a SOCKET for connecting to server
-    ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    if (ListenSocket == INVALID_SOCKET) {
-        printf("socket failed with error: %ld\n", WSAGetLastError());
-        freeaddrinfo(result);
-        WSACleanup();
-        return 1;
-    }
-
-    // Setup the TCP listening socket
-    iResult = bind( ListenSocket, result->ai_addr, (int)result->ai_addrlen);
-    if (iResult == SOCKET_ERROR) {
-        printf("bind failed with error: %d\n", WSAGetLastError());
-        freeaddrinfo(result);
-        closesocket(ListenSocket);
-        WSACleanup();
-        return 1;
-    }
-
-    freeaddrinfo(result);
-
-    iResult = listen(ListenSocket, SOMAXCONN);
-    if (iResult == SOCKET_ERROR) {
-        printf("listen failed with error: %d\n", WSAGetLastError());
-        closesocket(ListenSocket);
-        WSACleanup();
-        return 1;
-    }
-
-    // Accept a client socket
-    ClientSocket = accept(ListenSocket, NULL, NULL);
-    if (ClientSocket == INVALID_SOCKET) {
-        printf("accept failed with error: %d\n", WSAGetLastError());
-        closesocket(ListenSocket);
-        WSACleanup();
-        return 1;
-    }
-
-    // No longer need server socket
-    closesocket(ListenSocket);
-
-    // Receive until the peer shuts down the connection
-    do {
-
-        iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
-        if (iResult > 0) {
-            printf("Bytes received: %d\n", iResult);
-
-        // Echo the buffer back to the sender
-            iSendResult = send( ClientSocket, recvbuf, iResult, 0 );
-            if (iSendResult == SOCKET_ERROR) {
-                printf("send failed with error: %d\n", WSAGetLastError());
-                closesocket(ClientSocket);
-                WSACleanup();
-                return 1;
-            }
-            printf("Bytes sent: %d\n", iSendResult);
-        }
-        else if (iResult == 0)
-            printf("Connection closing...\n");
-        else  {
-            printf("recv failed with error: %d\n", WSAGetLastError());
-            closesocket(ClientSocket);
-            WSACleanup();
-            return 1;
-        }
-
-    } while (iResult > 0);
-
-    // shutdown the connection since we're done
-    iResult = shutdown(ClientSocket, SD_SEND);
-    if (iResult == SOCKET_ERROR) {
-        printf("shutdown failed with error: %d\n", WSAGetLastError());
-        closesocket(ClientSocket);
-        WSACleanup();
-        return 1;
-    }
-
-    // cleanup
-    closesocket(ClientSocket);
-    WSACleanup();
-
-    return 0;
-}
-#endif
 
 
-
-/*  
-*   Function Name   : int monitorClients(void *clientSocket)
-*                   :
-*   Description     : This function looks for new sockets that indicate a client wants to attach to the server.
-*                   : It loops till the number of clients decrees to zero or it get killed. After picking up a
-*                   : new client, it creates a thread for that client so the server can handle messages from it.
-*                   : 
-*   Parameters      : void *infoStruct : This is the struct that has all the data for the client and server.
-*                   : It also holds another struct that is used for sending messages back and forth.
-*                   :
-*   Returns         : int retCode: the return value indicating the status or failure of the function
-*/
-int monitorClients(dataStruct *infoStruct)
-{
-    dataStruct* clientInfo  = (dataStruct*) infoStruct;     //A pointer to the struct that has all the client and server info.
-    int     retCode         = 0;                            //The return value indicating the status or failure of the function.
-    int     client_socket   = 0;                            //The client's socket, set by the accept call.
-    int     client_len      = 0;                            //The size of the client_addr struct.
-    int     server_socket   = clientInfo->server_socket;    //The server's socket.
-    struct  sockaddr_in client_addr;                        //Struct with details about client socket.
-
-    if (numClients <= MAX_CLIENTS) //do nothing for new clients well we have the max clients attached.
-    {
-
-        /*
-        * accept a packet from the client.
-        * this is a blocking operation.
-        */
-        client_len = sizeof (client_addr);
-        if ((client_socket = accept (server_socket,(struct sockaddr *)&client_addr, &client_len)) < 0) 
-        {
-              printf ("[SERVER] : accept() FAILED\n");
-              fflush(stdout);   
-        }
-
-        //track clients
-        numClients++;
-        clientInfo->client_socket = client_socket;
-
-        printf("%s\n", "Client connected");
-                    
-    } 
-    else
-    {
-        printf ("Error, reached max number of supported clients.\n");
-    }
-
-    int clSocket = clientInfo->client_socket;
-
-    char buffer[BUFSIZ];
-    //read in the message from the client
-    //read (clSocket, &clientInfo->clientMessage, sizeof(clientInfo->clientMessage));
-    printf("%s\n", "About to read from client");
-    recv (clSocket, buffer, 1024, 0);
-    buffer[1023] = '\0';    // ensure null termination!
-
-    //read (clSocket, buffer, sizeof(buffer));
-
-    printf("read: %s\n", buffer);
-
-    clientInfo->client_socket = clSocket;
-    int done = 1;
-
-    //loop till client enters >>bye<<
-    while((done = strcmp(clientInfo->clientMessage.message,">>bye<<")) != 0)
-    {
-        
-    //read in the message from the client
-    read (clSocket, &clientInfo->clientMessage, sizeof(clientInfo->clientMessage));
-
-    }
-
-    return retCode;
-} //end monitorClients function
 
 
 
@@ -690,64 +378,89 @@ int newSocket(int* server_socket, int sockType, int sockPort)
 *                   :
 *   Returns         : int retCode: the return value indicating the status or failure of the function
 */
-int readClient(int benchMarkSocket, int numBlocks, int blockSize)
+int readClient(int benchMarkSocket, int numBlocks, int blockSize, int sockType)
 {
     int     retCode         = 0;                            //The return value indicating the status or failure of the function.
     int     client_socket   = 0;                            //The client's socket, set by the accept call.
     int     client_len      = 0;                            //The size of the client_addr struct.
     struct  sockaddr_in client_addr;                        //Struct with details about client socket.
     char block[BUFSIZ] = {'\0'};
+    int sType = sockType;
+    int num = numBlocks;
+    int size = blockSize;
 
     /*
     * accept a packet from the client.
     * this is a blocking operation.
     */
     client_len = sizeof (client_addr);
-    if ((client_socket = accept (benchMarkSocket,(struct sockaddr *)&client_addr, &client_len)) < 0) 
+    if (sType == SOCK_STREAM)
     {
-          printf ("[SERVER] : accept() FAILED\n");
-          fflush(stdout);   
-          retCode = FAILURE;
-    }
+        if ((client_socket = accept (benchMarkSocket,(struct sockaddr *)&client_addr, &client_len)) < 0) 
+        {
+              printf ("[SERVER] : accept() FAILED\n");
+              fflush(stdout);   
+              retCode = FAILURE;
+        }
 
-    #ifdef DEBUG
-        printf("Number of blocks is:%i, Block size is: %i\n", numBlocks, blockSize);
-        printf("\n%s\n", "benchmark socket accepted");
-    #endif
-    int num = numBlocks;
-    int size = blockSize;
-
-    // Start timer
-    float startTime = (float)clock()/CLOCKS_PER_SEC;
-
-    //read the data from the socket
-    for (int i = 0; i < num; i++)
-    {
-        #ifdef _WIN32
-            if (recv (client_socket, block, size, 0) < 0)
-            {
-                printf ("[benchMarkSocket] : socket() recv FAILED. \nErrno returned %s\n", strerror(errno));
-                printf("recv failed with error: %d\n", WSAGetLastError());
-                closesocket(client_socket);
-                WSACleanup();
-            }
-        #endif
-        #ifdef linux
-            if (read (client_socket, block, size) < 0)
-            {
-                printf ("[benchMarkSocket] : socket() recv FAILED. \nErrno returned %i\n", errno);
-            }
-        #endif
 
         #ifdef DEBUG
-            printf("Read: %s\n", block);
+            printf("Number of blocks is:%i, Block size is: %i\n", numBlocks, blockSize);
+            printf("\n%s\n", "benchmark socket accepted");
         #endif
+
+        // Start timer
+        float startTime = (float)clock()/CLOCKS_PER_SEC;
+        
+        //read the data from the socket
+        for (int i = 0; i < num; i++)
+        {    
+
+            #ifdef _WIN32
+                if (recv (client_socket, block, size, 0) < 0)
+                {
+                    printf ("[benchMarkSocket] : socket() recv FAILED. \nErrno returned %s\n", strerror(errno));
+                    printf("recv failed with error: %d\n", WSAGetLastError());
+                    closesocket(client_socket);
+                    WSACleanup();
+                }
+            #endif
+            #ifdef linux
+                if (read (client_socket, block, size) < 0)
+                {
+                    printf ("[benchMarkSocket] : socket() recv FAILED. \nErrno returned %i\n", errno);
+                }
+            #endif
+
+
+            #ifdef DEBUG
+                printf("Read: %s\n", block);
+            #endif
+        }
+
+        float endTime = (float)clock()/CLOCKS_PER_SEC;
+        float elapsedTime = endTime - startTime;
+        printf("The measured time is: %f\n", elapsedTime);
+    }
+    else
+    {
+        int retVal = 0;
+
+        // Start timer
+        float startTime = (float)clock()/CLOCKS_PER_SEC;
+        while(exitFlag == 0)
+        {
+            retVal = recvfrom(client_socket, block, size, 0, (struct sockaddr *)&client_addr, &client_len);
+            printf("%i\n", retVal);
+            Sleep(1000);
+            
+        }
+        float endTime = (float)clock()/CLOCKS_PER_SEC;
+        float elapsedTime = endTime - startTime;
+        printf("The measured time is: %f\n", elapsedTime);
     }
 
-    float endTime = (float)clock()/CLOCKS_PER_SEC;
-
-    float elapsedTime = endTime - startTime;
-    printf("The measured time is: %f\n", elapsedTime);
+    
 
     return retCode;
 } //end monitorClients function

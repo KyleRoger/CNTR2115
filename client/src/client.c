@@ -7,7 +7,7 @@
 int runClient(int argc, char* argv[])
 {
 	socketInfo initialConnect;
-	int port = 15000;
+	int port = DEFAULT_PORT;
 	int i =0;
 	int socketType = 0;
 	int userPort = 0;
@@ -194,7 +194,8 @@ int runClient(int argc, char* argv[])
 						{
            					sprintf(block, "%d", i);
            					printf("%s", block);
-							retval = send(message_socket, block, blockSize, 0);
+           					int len = sizeof(server);
+							retval = send(message_socket, block, blockSize, 0); //sendto (message_socket, block, strlen(block), 0, (struct sockaddr *)&server, len);
 							if (retval < 0) 
 							{
 								printf("send() failed: error %d\n", i);
@@ -204,6 +205,11 @@ int runClient(int argc, char* argv[])
 								break;
 							}
 						}
+						
+						#ifdef DEBUG
+						printf("\n%s\n", "Finnished sending blocks, sending Bye");
+						#endif
+
 						strcpy(buf, "Bye");
 						retval = send(initial_socket, buf, sizeof(buf), 0);
 						if (retval < 0) 

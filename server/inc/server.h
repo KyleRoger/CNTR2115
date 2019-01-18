@@ -23,28 +23,13 @@
 #endif
 
 
-/******************************STRUCT*************************************/
-typedef struct dataStruct
-{
-	int server_socket;				//the server socket ID
-	int client_socket;				//the client socket ID
-	msgStruct clientMessage;		//the struct containing the clients details and message. - in struct.h
-}dataStruct;
-
-
 
 /********PROTOTYPES*******/
 void getIP(void);
 int runServer(int argc, char *argv[]);
-#ifdef _WIN32
-int __cdecl windowsSockets(void);
-#endif
 int newSocket(int* server_socket, int sockType, int sockPort);
 int intSocket(void);
-int closeSocket(int server_socket);
-int readClient(int benchMarkSocket, int numBlocks, int blockSize);
-void *socketThread(void *clientSocket);
-int monitorClients(dataStruct *infoStruct);
+int readClient(int benchMarkSocket, int numBlocks, int blockSize, int sockType);
 void showHelp(char** argv);
 int parseCmdLine(int argc, char** argv);
 void testType(socketInfo *testConnection, int serverSocket);
