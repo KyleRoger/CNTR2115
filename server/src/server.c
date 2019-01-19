@@ -25,7 +25,7 @@
 
 #undef UNICODE
 
-int exitFlag = 0;
+int exitFlag = RUN;
 
 
 /*  
@@ -39,16 +39,6 @@ int exitFlag = 0;
 */
 void getIP(void)
 {
-
-    /*struct ifaddrs *id;
-    int val;
-    val = getifaddrs(&id);
-    printf("Network Interface Name :- %s\n",id->ifa_name);
-    printf("Network Address of %s :- %d\n",id->ifa_name,id->ifa_addr);
-    printf("Network Data :- %d \n",id->ifa_data);
-    printf("Socket Data : -%c\n",id->ifa_addr->sa_data);
-    return 0;*/
-
     #ifdef _WIN32
         system("ipconfig | findstr IPv4");  //Credit: https://stackoverflow.com/questions/49216004/c-programming-getting-windows-ip-address
     #endif
@@ -110,7 +100,7 @@ void getIP(void)
 */
 int runServer(int argc, char *argv[])
 {
-	int status = FAILURE;
+	int status = SUCCESS;
 
     #ifdef _WIN32
         SOCKET connectInfoSocket = 0;           //This is the socket used by the server to get information about the benchmarking socket
@@ -127,49 +117,106 @@ int runServer(int argc, char *argv[])
   
     getIP();                                    //Display the server ipv4 address
 
+    //check startup arguments and fireup socket connections
     if ((connectInfoPort = parseCmdLine(argc, argv)) != INVALID_PARMS)
     {
-        
-        #ifdef _WIN32
-            initSocket();
-        #endif
 
-        //set up a new socket and bind to it
-        newSocket(&connectInfoSocket, socketType, connectInfoPort);
-
-        testType(&benchMarkConnection, connectInfoSocket);
+        status = connectonDetails(&benchMarkConnection);
 
         #ifdef DEBUG
-        printf("%s\n", "Test connection details"); 
-        printf("Socket is: %i\n", benchMarkConnection.socketType);
-        printf("Port is: %i\n", benchMarkConnection.userPort);
-        printf("Block size is: %i\n", benchMarkConnection.blockSize);
-        printf("Number of blocks is: %i\n", benchMarkConnection.numBlocks);
-        #endif   
+            printf("\n%s\n", "Test connection details"); 
+            printf("\tSocket is: %i\n", benchMarkConnection.socketType);
+            printf("\tPort is: %i\n", benchMarkConnection.userPort);
+            printf("\tBlock size is: %i\n", benchMarkConnection.blockSize);
+            printf("\tNumber of blocks is: %i\n\n", benchMarkConnection.numBlocks);
+        #endif           
 
-        while (exitFlag == 0)
+        if (benchMarkConnection.socketType == SOCK_STREAM)
         {
-            if(benchMarkConnection.socketType == SOCK_STREAM)
+            printf("TCP socket\n");
+            readTCP(benchMarkConnection);
+        }
+        else if (benchMarkConnection.socketType == SOCK_DGRAM)
+        {
+            printf("UDP Socket\n");
+            readUDP(benchMarkConnection);
+        }
+        else
+        {
+            printf("Not a valid socket type\n");
+            status = FAILURE;
+        }
+
+       /* #ifdef _WIN32
+            initSocket();
+        #endif*/
+
+        //set up a new TCP socket and bind to it
+        /*if (newSocket(&connectInfoSocket, SOCK_STREAM, connectInfoPort) < 0)
+        {
+            printf("%s\n", "Failed to create and bind to socket");
+            status = FAILURE;
+        }
+        else
+        {*/
+            // testType(&benchMarkConnection, connectInfoSocket);
+
+            
+        // }
+    }
+    else
+    {
+        status = FAILURE;
+    }
+
+    if (status != FAILURE)
+    {
+        while (exitFlag == RUN)
+        {
+            if(benchMarkConnection.socketType == SOCK_STREAM)   //TCP connection requested
+            {
+
+                //Create a socket for benmarking
+                /*if (newSocket(&benchMarkSocket, benchMarkConnection.socketType, benchMarkConnection.userPort) < 0)
+                {
+                    printf("%s\n", "Failed to create and bind to socket");
+                    status = FAILURE;
+                }
+                else
+                {*/
+                    /*
+                    * start listening on the socket
+                    */
+                   /* if (listen (benchMarkSocket, 10) < 0) 
+                    {
+                        printf ("[SERVER] : listen() - FAILED.\n");     
+                        status = FAILURE;
+                    }
+                    else
+                    {
+                        status = readClient(benchMarkSocket, benchMarkConnection.numBlocks, benchMarkConnection.blockSize, benchMarkConnection.socketType);
+                    }
+                }*/
+            }
+            else if (benchMarkConnection.socketType == SOCK_DGRAM)   //UDP connection requested
             {
                 //Create a socket for benmarking
-                newSocket(&benchMarkSocket, benchMarkConnection.socketType, benchMarkConnection.userPort);  
-
-                /*
-                * start listening on the socket
-                */
-                if (listen (benchMarkSocket, 10) < 0) 
+                if (newSocket(&benchMarkSocket, benchMarkConnection.socketType, benchMarkConnection.userPort) < 0)
                 {
-                    printf ("[SERVER] : listen() - FAILED.\n");     
+                    printf("%s\n", "Failed to create and bind to socket");
                     status = FAILURE;
                 }
                 else
                 {
-                    readClient(benchMarkSocket, benchMarkConnection.numBlocks, benchMarkConnection.blockSize, benchMarkConnection.socketType);
-                    status = SUCCESS;
+                    status = readClient(benchMarkSocket, benchMarkConnection.numBlocks, benchMarkConnection.blockSize, benchMarkConnection.socketType);
                 }
-
             }
-
+            else
+            {
+                //not a reconized socket type
+                status = FAILURE;
+                exitFlag = EXIT;
+            }
 
             #ifdef _WIN32
                 // cleanup
@@ -182,12 +229,8 @@ int runServer(int argc, char *argv[])
                 close(connectInfoSocket);
             #endif
 
-            exitFlag = 1;
+            exitFlag = EXIT;
         }
-    }
-    else
-    {
-        status = FAILURE;
     }
 
 	return status;
@@ -354,7 +397,9 @@ int newSocket(int* server_socket, int sockType, int sockPort)
 
         if (bind (*server_socket, (struct sockaddr *)&server_addr, sizeof (server_addr)) < 0) 
         {
-            printf ("[SERVER] : bind() FAILED. \nErrno returned %i\n", errno);
+            #ifdef _WIN32
+            printf ("[SERVER] : bind() FAILED. \nErrno returned %i, %s\nWSAGetLastError returned %d\n", errno, strerror(errno), WSAGetLastError());
+            #endif
             close (*server_socket);
             retCode = -2;
         }
@@ -380,14 +425,16 @@ int newSocket(int* server_socket, int sockType, int sockPort)
 */
 int readClient(int benchMarkSocket, int numBlocks, int blockSize, int sockType)
 {
-    int     retCode         = 0;                            //The return value indicating the status or failure of the function.
-    int     client_socket   = 0;                            //The client's socket, set by the accept call.
-    int     client_len      = 0;                            //The size of the client_addr struct.
-    struct  sockaddr_in client_addr;                        //Struct with details about client socket.
-    char block[BUFSIZ] = {'\0'};
+    int     retCode         = 0;                //The return value indicating the status or failure of the function.
+    int     client_socket   = 0;                //The client's socket, set by the accept call.
+    int     client_len      = 0;                //The size of the client_addr struct.
+    struct  sockaddr_in client_addr;            //Struct with details about client socket.
+    char block[10000] = {'\0'};
     int sType = sockType;
     int num = numBlocks;
     int size = blockSize;
+    char allBlocks[BUFSIZ][BUFSIZ];
+    int recv_len = 0;
 
     /*
     * accept a packet from the client.
@@ -432,9 +479,10 @@ int readClient(int benchMarkSocket, int numBlocks, int blockSize, int sockType)
                 }
             #endif
 
-
+            strcpy(allBlocks[i], block);
             #ifdef DEBUG
-                printf("Read: %s\n", block);
+                printf("Read: %s", block);
+                printf(" Size is %zu\n", sizeof(block));
             #endif
         }
 
@@ -442,42 +490,145 @@ int readClient(int benchMarkSocket, int numBlocks, int blockSize, int sockType)
         float elapsedTime = endTime - startTime;
         printf("The measured time is: %f\n", elapsedTime);
     }
-    else
+    else    //UDP socket
     {
+
+      /*  SOCKET s;
+    struct sockaddr_in server, si_other;
+    int slen , recv_len;
+    char buf[BUFLEN];
+    WSADATA wsa;
+
+    slen = sizeof(si_other) ;
+    
+    //Initialise winsock
+    printf("\nInitialising Winsock...");
+    if (WSAStartup(MAKEWORD(2,2),&wsa) != 0)
+    {
+        printf("Failed. Error Code : %d",WSAGetLastError());
+        exit(EXIT_FAILURE);
+    }
+    printf("Initialised.\n");
+    
+    //Create a socket
+    if((s = socket(AF_INET , SOCK_DGRAM , 0 )) == INVALID_SOCKET)
+    {
+        printf("Could not create socket : %d" , WSAGetLastError());
+    }
+    printf("Socket created.\n");
+    
+    //Prepare the sockaddr_in structure
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = INADDR_ANY;
+    server.sin_port = htons( PORT );
+    
+    //Bind
+    if( bind(s ,(struct sockaddr *)&server , sizeof(server)) == SOCKET_ERROR)
+    {
+        printf("Bind failed with error code : %d" , WSAGetLastError());
+        exit(EXIT_FAILURE);
+    }
+    puts("Bind done");
+
+    //keep listening for data
+    while(1)
+    {
+        printf("Waiting for data...");
+        fflush(stdout);
+        
+        //clear the buffer by filling null, it might have previously received data
+        memset(buf,'\0', BUFLEN);
+        
+        //try to receive some data, this is a blocking call
+        if ((recv_len = recvfrom(s, buf, BUFLEN, 0, (struct sockaddr *) &si_other, &slen)) == SOCKET_ERROR)
+        {
+            printf("recvfrom() failed with error code : %d" , WSAGetLastError());
+            exit(EXIT_FAILURE);
+        }
+        
+        //print details of the client/peer and the data received
+        printf("Received packet from %s:%d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
+        printf("Data: %s\n" , buf);
+        
+        //now reply the client with the same data
+        if (sendto(s, buf, recv_len, 0, (struct sockaddr*) &si_other, slen) == SOCKET_ERROR)
+        {
+            printf("sendto() failed with error code : %d" , WSAGetLastError());
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    closesocket(s);
+    WSACleanup();
+    
+    return 0;
+*/
+//********************************
+
         int retVal = 0;
 
         // Start timer
         float startTime = (float)clock()/CLOCKS_PER_SEC;
-        while(exitFlag == 0)
+
+        //keep listening for data
+       /* while(1)    // Credit: https://www.binarytides.com/udp-socket-programming-in-winsock/
+        {*/
+            #ifdef DEBUG
+            printf("Waiting for data...");
+            #endif
+            fflush(stdout);
+            
+            //clear the buffer by filling null, it might have previously received data
+            memset(block,'\0', size);
+            
+            //try to receive some data, this is a blocking call
+            if ((recv_len = recvfrom(client_socket, block, size, MSG_WAITALL, (struct sockaddr *)&client_addr, &client_len)) < 0)
+            {
+                //printf("recvfrom() failed with error code : %d" , WSAGetLastError());
+                //retCode = SOCKET_ERROR;
+            }
+            
+            //print details of the client/peer and the data received
+            #ifdef DEBUG
+            printf("Received packet from %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+            printf("Data: %s\n" , block);
+            #endif
+        //}
+        /*while(exitFlag == RUN)
         {
             retVal = recvfrom(client_socket, block, size, 0, (struct sockaddr *)&client_addr, &client_len);
             printf("%i\n", retVal);
+            #ifdef _WIN32
             Sleep(1000);
+            #endif
             
-        }
+        }*/
+
+        //strcpy(allBlocks[i], block);
+        #ifdef DEBUG
+            printf("Read: %s\n", block);
+        #endif
         float endTime = (float)clock()/CLOCKS_PER_SEC;
         float elapsedTime = endTime - startTime;
         printf("The measured time is: %f\n", elapsedTime);
     }
 
-    
-
     return retCode;
-} //end monitorClients function
+} //end readClient function
+
+
+
+
 
 
 
 /*  
 *   Function Name   : parseCmdLine
 *   Description     : This function takes in agruments from the command line and seperate them into useful parts.
-*                   : It also does checks for invalid input. If no input file is named, stdin is assumed. The
-*                   : same for output, if it wasn't provided, use stdout. Also there are two types of file outputs
-*                   : - srec or asm. Only one is used at a time.
+*                   : It also does checks for invalid input. 
 *                   : Then it saves the arguments status for later use before returning the outcome of checks made. 
 *   Parameters      : int argc - number of command line arguments
 *                   : char** argv - where the command line arguments are
-*                   : char* inputFileName - name of the file provided for input at the command line.
-*                   : char* outputFileName - name of the file provided at the command line for output.
 *   Returns         : int retCode - type of input, valid or otherwise, provided as arguments in the command line.
 */
 int parseCmdLine(int argc, char** argv)
@@ -512,7 +663,6 @@ int parseCmdLine(int argc, char** argv)
 *                   : This message is basically just a quck usage statement.
 *                   :
 *   Parameters      : char** argv - what the command line arguments are.
-*                   : int whichHelp - what message should be printed out to the screen.
 *                   : 
 *   Returns         : N/A
 */
