@@ -13,15 +13,7 @@
 
 
 /*******************************CONSTANTS*********************************************/
-#define DEFAULT_PORT 	"15000"											//The port to use in communication, chosen at random.
-#define PORT 			15000
-#define BUFFER_SIZE		1024											//The size of the message array that is sent in the socket
-#define IP_SIZE			20												//Number of elements in the message array reserved for the IP address
-#define IP_START		0												//The starting element in the message array for the IP address
-#define NAME_SIZE		80												//Number of elements in the message array reserved for the name
-#define NAME_START		(IP_SIZE + 1)									//The starting element in the message array for the name
-#define MESSAGE_SIZE	100												//Number of elements in the message array reserved for the actual message
-#define MESSAGE_START	(IP_SIZE + NAME_SIZE + 1)						//The starting element in the message array for the actual message
-#define TIME_SIZE		20												//Number of elements in the message array reserved for the time
-#define TIME_START		(IP_SIZE + NAME_SIZE + MESSAGE_SIZE + 1)		//The starting element in the message array for the time
-#define DEFAULT_BUFLEN 	512
+#define DEFAULT_PORT 		15000			//The default port to use in communication, chosen at random.
+#define DEFAULT_SOCK_TYPE	SOCK_STREAM		//Use TCP as the default					
+#define BUFFER_SIZE			1024			//The size of the message array that is sent in the socket
+#define DEFAULT_BUFLEN 		512
