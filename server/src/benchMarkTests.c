@@ -3,20 +3,21 @@
 #include "../inc/server.h"
 
 
+extern int exitFlag;
 
 int readTCP(socketInfo benchMarkConnection)
 {
-
-
 	int     status = SUCCESS;                //The return value indicating the status or failure of the function.
     int     server_len      = 0;                //The size of the client_addr struct.
-    char block[10000] = {'\0'};
+    char block[BUFLEN] = {'\0'};
     int sType = benchMarkConnection.socketType;
     int num = benchMarkConnection.numBlocks;
     int size = benchMarkConnection.blockSize;
     int port = benchMarkConnection.userPort;
-    char allBlocks[BUFSIZ][BUFSIZ];
+    char allBlocks[100][BUFLEN];
     int recv_len = 0;
+
+
 
 	#ifdef _WIN32
         SOCKET benchMarkSocket = 0;           	//This is the socket used by the server to get information about the benchmarking socket
@@ -165,6 +166,49 @@ int readTCP(socketInfo benchMarkConnection)
 	    printf("The measured time is: %f\n", elapsedTime);
 	}
 
+	printf("\nSocket test report\n");
+	printf("*****************************************************\n");
+
+	//check that all blocks are in order	
+    for (int i = 0; i < num; i++)
+    {
+        if (atoi(allBlocks[i]) + 1 != atoi(allBlocks[i + 1]))
+        {
+            printf("Block [%i] out of order\n", atoi(allBlocks[i]));
+        	printf("\tallBlocks[i] is: %i, allBlocks[i + 1] is: %i\n", atoi(allBlocks[i]), atoi(allBlocks[i + 1]));
+        }
+
+    }
+
+    int notFound[BUFLEN] = {0};
+
+	//check that all blocks are pressent
+    for (int i = 0; i < num; i++)
+    {
+    	for (int j = 0; j < num; j++)
+    	{
+    		if (atoi(allBlocks[j]) == i)
+    		{
+    			continue;
+    		}
+    		else
+    		{
+    			notFound[i] = 1;
+    		}    		
+    	}
+    }
+
+    // check for missing blocks
+    for (int i = 0; i < num; i++)
+    {
+    	if (notFound[i] == 1)
+    	{
+    		printf("Block [%i] was not found.\n", i);
+    	}
+    }  
+
+	printf("*****************************************************\n");
+
 	 #ifdef _WIN32
         // cleanup
         closesocket(benchMarkSocket);
@@ -184,18 +228,34 @@ int readTCP(socketInfo benchMarkConnection)
 int readUDP(socketInfo benchMarkConnection)
 {
 	int status = SUCCESS;                	//The return value indicating the status or failure of the function.
-    char block[10000] = {'\0'};
+    char block[BUFLEN] = {'\0'};
     int sType = benchMarkConnection.socketType;
     int num = benchMarkConnection.numBlocks;
     int size = benchMarkConnection.blockSize;
     int port = benchMarkConnection.userPort;
-    char allBlocks[BUFSIZ][BUFSIZ];
+    char allBlocks[100][BUFLEN];
     int recv_len = 0;
     struct sockaddr_in server_addr;     //A struct used for the socket information.
     struct sockaddr_in client_addr;
     int len = sizeof(client_addr);
 
- 
+/* 	if (size == 1000)
+ 	{
+    	char allBlocks[BUFLEN][1000]; 		
+ 	}
+ 	else if (size == 2000)
+ 	{
+    	char allBlocks[BUFLEN][2000]; 		
+ 	}
+ 	else if (size == 5000)
+ 	{
+    	char allBlocks[BUFLEN][5000]; 		
+ 	}
+ 	else
+ 	{
+    	char allBlocks[BUFSIZ][10000]; 		
+ 	}*/
+
 	#ifdef _WIN32
         SOCKET benchMarkSocket = 0;           	//This is the socket used by the server to get information about the benchmarking socket
     #endif
@@ -225,8 +285,6 @@ int readUDP(socketInfo benchMarkConnection)
             status = SUCCESS;
         }
     #endif
-
-    
 
     //set up socket
     if ((benchMarkSocket = socket (AF_INET, SOCK_DGRAM, 0)) < 0) 
@@ -293,7 +351,8 @@ int readUDP(socketInfo benchMarkConnection)
             printf(" Size is %zu\n", sizeof(block));
         #endif
     }*/
-	while(1)
+	//while(exitFlag == RUN)
+    for (int i = 0; i < num; i++)
 	{
 		printf("Waiting for data...");
 		fflush(stdout);
@@ -302,16 +361,29 @@ int readUDP(socketInfo benchMarkConnection)
 		memset(block,'\0', BUFLEN);
 		
 		//try to receive some data, this is a blocking call
-		if ((recv_len = recvfrom(benchMarkSocket, block, size, 0, (struct sockaddr *) &client_addr, &len)) == SOCKET_ERROR)
-		{
-			printf("recvfrom() failed with error code : %d" , WSAGetLastError());
-			exit(EXIT_FAILURE);
-		}
+		#ifdef _WIN32
+			if ((recv_len = recvfrom(benchMarkSocket, block, size, 0, (struct sockaddr *) &client_addr, &len)) == SOCKET_ERROR)
+			{
+				printf("recvfrom() failed with error code : %d" , WSAGetLastError());
+				status = FAILURE;
+			}
+		#endif
+		#ifdef linux
+			if ((recv_len = recvfrom(benchMarkSocket, block, size, 0, (struct sockaddr *) &client_addr, &len)) < 0)
+			{
+				printf("recvfrom() failed with error : %d" , recv_len);
+				status = FAILURE;
+			}
+		#endif
 		
 		//print details of the client/peer and the data received
 		printf("Received packet \n");
 		printf("Data: %s\n" , block);
-		
+		strcpy(allBlocks[i], block);
+        #ifdef DEBUG
+            printf("Read: %s", block);
+            printf(" Size is %zu\n", sizeof(block));
+        #endif		
 	}
 
 
@@ -333,6 +405,8 @@ int readUDP(socketInfo benchMarkConnection)
 	return status;
 }
 
+
+
 /*  
 *   Function Name   : report
 *   Description     : This function takes in an array and checks the data is as expected.
@@ -341,25 +415,3 @@ int readUDP(socketInfo benchMarkConnection)
 *                   : int numBlocks - the number of expected blocks sent over the socket.
 *   Returns         : N/A
 */
-void report(char blockData[BUFSIZ][BUFSIZ], int numBlocks)
-{
-
-    for (int i = 0; i < numBlocks; i++)
-    {
-        if (atoi(blockData[i]) + 1 != atoi(blockData[i + 1]))
-        {
-            printf("%s\n", "Bad block");
-        }
-
-    }
-
-/*    for(int i = 0; i < numBlocks; i++)
-    {
-        printf("%s\n", blockData[i]);
-        if (atoi(blockData[i]) == i)
-        {
-            printf("%s\n", "SUCCESS");
-        }
-    }*/
-  
-}
