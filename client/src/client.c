@@ -203,6 +203,7 @@ int runClient(int argc, char* argv[])
 #endif					
 								break;
 							}
+							memset(block, 0, blockSize);
 						}
 						strcpy(buf, "Bye");
 						retval = send(inital_socket, buf, sizeof(buf), 0);
