@@ -19,7 +19,7 @@ RM_BIN=rm -f ./bin/*
 RM_OBJ=rm -f ./obj/*.o
 RM_INC=rm -f ./inc/*.h~
 RM_SRC=rm -f ./src/*.c~
-OBJ=./obj/main.o ./obj/server.o
+OBJ=./obj/main.o ./obj/server.o /obj/firstConnect.o ./obj/benchMarkTests.o
 CC=cc
 LD=cl
 LINUX_FLAGS=-Werror -ggdb
@@ -32,7 +32,7 @@ OBJ_LOCATION=./obj
 SRC_LOCATION=./src
 BIN_LOCATION=./bin
 INC_LOCATION=./inc
-SRC=./src/main.c ./src/server.c
+SRC=./src/main.c ./src/server.c ./src/firstConnect.c ./src/benchMarkTests.c
 MAIN=./src/main.c
 MAIN_OBJ=./obj/main.o
 SUPPORTING=./src/server.c
@@ -49,7 +49,7 @@ DEBUG_CCFLAGS=-c -g -Werror
 # ===========================================================
 # 						Whole project
 # ===========================================================
-# Everything in this part of the system. (The DR sub system)
+# Everything in this part of the system.
 all: $(SRC) $(EXE)
 
 
