@@ -19,7 +19,7 @@ RM_BIN=rm -f ./bin/*
 RM_OBJ=rm -f ./obj/*.o
 RM_INC=rm -f ./inc/*.h~
 RM_SRC=rm -f ./src/*.c~
-OBJ=./obj/main.o ./obj/server.o /obj/firstConnect.o ./obj/benchMarkTests.o
+OBJ=./obj/main.o ./obj/server.o ./obj/firstConnect.o ./obj/benchMarkTests.o
 CC=cc
 LD=cl
 LINUX_FLAGS=-Werror -ggdb
@@ -37,6 +37,7 @@ MAIN=./src/main.c
 MAIN_OBJ=./obj/main.o
 SUPPORTING=./src/server.c
 SUPPORTING_OBJ=./obj/server.o
+ALL_OBJ=$(SRC: .c=./obj/.o)
 STD_HEADERS=./inc/server.h ../common/inc/struct.h ../common/inc/protocol.h ../common/inc/ispeed.h ../common/inc/ispeedSockets.h
 EXE=./bin/ispeed
 DEBUG_EXE=./bin/server-debug
@@ -59,8 +60,8 @@ all: $(SRC) $(EXE)
 # =======================================================
 # FINAL BINARY Target
 
-$(EXE) : $(OBJ)
-	$(CC) $(LINUX_FLAGS) $(OBJ) $(COFLAGS) $@ $(THREAD_FLAGS)
+$(EXE) : $(ALL_OBJ)
+	$(CC) $(LINUX_FLAGS) $(ALL_OBJ) $(COFLAGS) $@ $(THREAD_FLAGS)
 
 
 
@@ -72,7 +73,6 @@ $(MAIN_OBJ) : $(MAIN) $(STD_HEADERS)
 
 $(SUPPORTING_OBJ) : $(SUPPORTING) $(STD_HEADERS)
 	$(CC) $(CCFLAGS) $(SUPPORTING) $(COFLAGS) $@ 
-
 
 
 # ===========================================================

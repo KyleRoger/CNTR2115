@@ -23,7 +23,7 @@ INC_LOCATION=.\inc
 SRC=.\src\main.c .\src\server.c .\src\firstConnect.c .\src\benchMarkTests.c
 MAIN=.\src\main.c
 SUPPORTING=.\src\server.c .\src\firstConnect.c .\src\benchMarkTests.c
-OBJ=$(SRC: .c=.obj)
+OBJ=$(SRC: .c=.\obj\.obj)
 OBJ_MAIN=main.obj
 OBJ_SUPPORTING=server.obj
 STD_HEADERS=.\inc\server.h ..\common\inc\ispeed.h ..\common\inc\ispeedSockets.h ..\common\inc\protocol.h ..\common\inc\struct.h
@@ -37,10 +37,7 @@ all: $(SRC) $(EXE)
 
 $(EXE): $(OBJ)
 	$(LD) $(WIN_FLAGS) $(OBJ) $(LDFLAGS)$@
-	move $(OBJ_MAIN) $(OBJ_LOCATION)
-	move $(OBJ_SUPPORTING) $(OBJ_LOCATION)
-	move firstConnect.obj $(OBJ_LOCATION)
-	move benchMarkTests.obj $(OBJ_LOCATION)
+
 
 main: $(MAIN) $(STD_HEADERS)
 	$(LD) $(MAIN) $(CFLAGS)
