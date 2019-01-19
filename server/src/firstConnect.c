@@ -165,7 +165,7 @@ int connectonDetails(socketInfo *benchMarkConnection)
      #ifdef _WIN32
         // cleanup
         closesocket(connectInfoSocket);
-        status = WSACleanup();
+        WSACleanup();
     #endif
 
     #ifdef linux

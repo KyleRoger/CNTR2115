@@ -25,7 +25,7 @@
 
 #undef UNICODE
 
-int exitFlag = RUN;
+volatile int exitFlag = RUN;
 
 
 /*  
@@ -124,112 +124,39 @@ int runServer(int argc, char *argv[])
         status = connectonDetails(&benchMarkConnection);
 
         #ifdef DEBUG
+            printf("Connect socket returned a status of: %d\n", status);
             printf("\n%s\n", "Test connection details"); 
             printf("\tSocket is: %i\n", benchMarkConnection.socketType);
             printf("\tPort is: %i\n", benchMarkConnection.userPort);
             printf("\tBlock size is: %i\n", benchMarkConnection.blockSize);
             printf("\tNumber of blocks is: %i\n\n", benchMarkConnection.numBlocks);
         #endif           
-
-        if (benchMarkConnection.socketType == SOCK_STREAM)
-        {
-            printf("TCP socket\n");
-            readTCP(benchMarkConnection);
-        }
-        else if (benchMarkConnection.socketType == SOCK_DGRAM)
-        {
-            printf("UDP Socket\n");
-            readUDP(benchMarkConnection);
-        }
-        else
-        {
-            printf("Not a valid socket type\n");
-            status = FAILURE;
-        }
-
-       /* #ifdef _WIN32
-            initSocket();
-        #endif*/
-
-        //set up a new TCP socket and bind to it
-        /*if (newSocket(&connectInfoSocket, SOCK_STREAM, connectInfoPort) < 0)
-        {
-            printf("%s\n", "Failed to create and bind to socket");
-            status = FAILURE;
-        }
-        else
-        {*/
-            // testType(&benchMarkConnection, connectInfoSocket);
-
-            
-        // }
     }
     else
     {
         status = FAILURE;
     }
 
-    if (status != FAILURE)
+    if (status == SUCCESS)
     {
-        while (exitFlag == RUN)
+        if (benchMarkConnection.socketType == SOCK_STREAM)
         {
-            if(benchMarkConnection.socketType == SOCK_STREAM)   //TCP connection requested
-            {
-
-                //Create a socket for benmarking
-                /*if (newSocket(&benchMarkSocket, benchMarkConnection.socketType, benchMarkConnection.userPort) < 0)
-                {
-                    printf("%s\n", "Failed to create and bind to socket");
-                    status = FAILURE;
-                }
-                else
-                {*/
-                    /*
-                    * start listening on the socket
-                    */
-                   /* if (listen (benchMarkSocket, 10) < 0) 
-                    {
-                        printf ("[SERVER] : listen() - FAILED.\n");     
-                        status = FAILURE;
-                    }
-                    else
-                    {
-                        status = readClient(benchMarkSocket, benchMarkConnection.numBlocks, benchMarkConnection.blockSize, benchMarkConnection.socketType);
-                    }
-                }*/
-            }
-            else if (benchMarkConnection.socketType == SOCK_DGRAM)   //UDP connection requested
-            {
-                //Create a socket for benmarking
-                if (newSocket(&benchMarkSocket, benchMarkConnection.socketType, benchMarkConnection.userPort) < 0)
-                {
-                    printf("%s\n", "Failed to create and bind to socket");
-                    status = FAILURE;
-                }
-                else
-                {
-                    status = readClient(benchMarkSocket, benchMarkConnection.numBlocks, benchMarkConnection.blockSize, benchMarkConnection.socketType);
-                }
-            }
-            else
-            {
-                //not a reconized socket type
-                status = FAILURE;
-                exitFlag = EXIT;
-            }
-
-            #ifdef _WIN32
-                // cleanup
-                closesocket(connectInfoSocket);
-                status = WSACleanup();
+            #ifdef DEBUG
+            printf("TCP socket\n");
             #endif
-
-            #ifdef linux
-                //shut server down
-                close(connectInfoSocket);
+            readTCP(benchMarkConnection);
+        }
+        else if (benchMarkConnection.socketType == SOCK_DGRAM)
+        {
+            #ifdef DEBUG
+            printf("UDP Socket\n");
             #endif
-
-            exitFlag = EXIT;
+            readUDP(benchMarkConnection);
+        }
+        else
+        {
+            printf("Not a valid socket type\n");
+            status = FAILURE;
         }
     }
 
