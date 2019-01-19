@@ -142,6 +142,7 @@ int runClient(int argc, char* argv[])
 				retval = send(initial_socket, buf, sizeof(buf), 0);
 				if (retval < 0) 
 				{
+					printf("\nsend() failed with error code : %d\n" , WSAGetLastError());
 					printf("send() failed: error %d\n", i);
 #ifdef _WIN32					
 					WSACleanup();
@@ -149,7 +150,18 @@ int runClient(int argc, char* argv[])
 					return 0;
 				}
 
+				     #ifdef _WIN32
+				        // cleanup
+				        closesocket(initial_socket);
+				        WSACleanup();
+				    #endif
 
+				    #ifdef linux
+				        //shut server down
+				        close(initial_socket);
+				    #endif
+
+Sleep(1000);
 #ifdef _WIN32
 				if ((retval = WSAStartup(MAKEWORD(2,2), &wsaData)) != 0) 
 				{
@@ -193,19 +205,26 @@ int runClient(int argc, char* argv[])
 						for(i =  0; i < numBlocks; i++)
 						{
            					sprintf(block, "%d", i);
-           					printf("%s", block);
-           					int len = sizeof(server);
-							retval = send(message_socket, block, blockSize, 0); //sendto (message_socket, block, strlen(block), 0, (struct sockaddr *)&server, len);
+           					printf("%s ", block);
+           					printf("Block size: %zu\n", sizeof(block));
+           					/*int len = sizeof(server);
+           					if (sendto(message_socket, block, strlen(block) , 0 , (struct sockaddr *) &server, len) == SOCKET_ERROR)
+							{
+								printf("sendto() failed with error code : %d" , WSAGetLastError());
+								exit(EXIT_FAILURE);
+							}
+*/							retval = send(message_socket, block, blockSize, 0); //sendto (message_socket, block, strlen(block), 0, (struct sockaddr *)&server, len);
 							if (retval < 0) 
 							{
 								printf("send() failed: error %d\n", i);
 #ifdef _WIN32					
+								printf("\nsend() failed with error code : %d\n" , WSAGetLastError());
 								WSACleanup();
 #endif					
 								break;
 							}
 						}
-						
+
 						#ifdef DEBUG
 						printf("\n%s\n", "Finnished sending blocks, sending Bye");
 						#endif
