@@ -198,6 +198,7 @@ Sleep(1000);
 						{
 							printf("connect() failed: %s \n", serverIP);
 #ifdef _WIN32									
+							printf("\nConnect() failed with error code : %d\n" , WSAGetLastError());
 							WSACleanup();
 #endif			
 						}
@@ -216,7 +217,7 @@ Sleep(1000);
 */							retval = send(message_socket, block, blockSize, 0); //sendto (message_socket, block, strlen(block), 0, (struct sockaddr *)&server, len);
 							if (retval < 0) 
 							{
-								printf("send() failed: error %d\n", i);
+								printf("send() failed: error.\n\tI = %d\n", i);
 #ifdef _WIN32					
 								printf("\nsend() failed with error code : %d\n" , WSAGetLastError());
 								WSACleanup();
