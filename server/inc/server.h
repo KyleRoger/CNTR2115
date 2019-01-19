@@ -33,6 +33,10 @@ int readClient(int benchMarkSocket, int numBlocks, int blockSize, int sockType);
 void showHelp(char** argv);
 int parseCmdLine(int argc, char** argv);
 void testType(socketInfo *testConnection, int serverSocket);
+void report(char blockData[BUFSIZ][BUFSIZ], int numBlocks);
+int connectonDetails(socketInfo *benchMarkConnection);
+int readTCP(socketInfo benchMarkConnection);
+int readUDP(socketInfo benchMarkConnection);
 
 
 
@@ -40,5 +44,9 @@ void testType(socketInfo *testConnection, int serverSocket);
 #define SUCCESS 1
 #define FAILURE 0
 #define INVALID_PARMS -1
+#define RUN 	1
+#define EXIT 	0
+#define BUFLEN 10000	//Max length of buffer
+#define PORT 15008		//The port on which to listen for incoming data
 
-#define DEBUG	//debugging messages
+#define DEBUG			//debugging messages
