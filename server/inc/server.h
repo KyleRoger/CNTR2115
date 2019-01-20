@@ -16,6 +16,7 @@
 #include "../../common/inc/ispeed.h"
 #include "../../common/inc/ispeedSockets.h"
 #include <time.h>
+#include <malloc.h>
 
 #ifdef linux
 	#include <ifaddrs.h>
