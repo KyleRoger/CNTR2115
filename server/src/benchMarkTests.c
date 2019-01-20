@@ -274,14 +274,34 @@ int readUDP(socketInfo benchMarkConnection)
 	int status = SUCCESS;                	//The return value indicating the status or failure of the function.
     char block[BUFLEN] = {'\0'};
     int sType = benchMarkConnection.socketType;
-    int num = benchMarkConnection.numBlocks;
-    int size = benchMarkConnection.blockSize;
+    int numBlocks = benchMarkConnection.numBlocks;
+    int blockSize = benchMarkConnection.blockSize;
     int port = benchMarkConnection.userPort;
     char allBlocks[100][BUFLEN];
     int recv_len = 0;
     struct sockaddr_in server_addr;     //A struct used for the socket information.
     struct sockaddr_in client_addr;
     int len = sizeof(client_addr);
+    char **blocks;
+
+    // Create space in memory to store incoming blocks
+    blocks = (char**)malloc((numBlocks + 1) * sizeof(char *));
+    if (blocks == NULL)
+    {
+    	printf("%s\n", "Out of memory");
+    	status = FAILURE;
+    }
+
+    for (int i = 0; i < numBlocks; i++)
+    {
+    	blocks[i] = malloc(blockSize * sizeof(char));
+    	if (blocks[i] == NULL)
+    	{
+    		printf("%s\n", "Out of memory");
+    		status = FAILURE;
+    		break;
+    	}
+    }
 
 /* 	if (size == 1000)
  	{
@@ -364,7 +384,7 @@ int readUDP(socketInfo benchMarkConnection)
     }
 
     #ifdef DEBUG
-        printf("Number of blocks is:%i, Block size is: %i\n", num, size);
+        printf("Number of blocks is:%i, Block size is: %i\n", numBlocks, blockSize);
         printf("\n%s\n", "benchmark socket accepted");
     #endif
 
@@ -396,7 +416,7 @@ int readUDP(socketInfo benchMarkConnection)
         #endif
     }*/
 	//while(exitFlag == RUN)
-    for (int i = 0; i < num; i++)
+    for (int i = 0; i < numBlocks; i++)
 	{
 		printf("Waiting for data...");
 		fflush(stdout);
@@ -406,25 +426,28 @@ int readUDP(socketInfo benchMarkConnection)
 		
 		//try to receive some data, this is a blocking call
 		#ifdef _WIN32
-			if ((recv_len = recvfrom(benchMarkSocket, block, size, 0, (struct sockaddr *) &client_addr, &len)) == SOCKET_ERROR)
+			if ((recv_len = recvfrom(benchMarkSocket, block, blockSize, 0, (struct sockaddr *) &client_addr, &len)) == SOCKET_ERROR)
 			{
 				printf("recvfrom() failed with error code : %d" , WSAGetLastError());
 				status = FAILURE;
 			}
 		#endif
 		#ifdef linux
-			if ((recv_len = recvfrom(benchMarkSocket, block, size, 0, (struct sockaddr *) &client_addr, &len)) < 0)
+			if ((recv_len = recvfrom(benchMarkSocket, block, blockSize, 0, (struct sockaddr *) &client_addr, &len)) < 0)
 			{
 				printf("recvfrom() failed with error : %d" , recv_len);
 				status = FAILURE;
 			}
 		#endif
 		
-		//print details of the client/peer and the data received
-		printf("Received packet \n");
-		printf("Data: %s\n" , block);
-		strcpy(allBlocks[i], block);
+		
+		strcpy(blocks[i], block);
+
         #ifdef DEBUG
+	        //print details of the client/peer and the data received
+			printf("Received packet \n");
+			printf("Data: %s\n" , block);
+
             printf("Read: %s", block);
             printf(" Size is %zu\n", sizeof(block));
         #endif		
@@ -445,6 +468,67 @@ int readUDP(socketInfo benchMarkConnection)
         //shut server down
         close(benchMarkSocket);
     #endif
+
+        	printf("\nSocket test report\n");
+	printf("*****************************************************\n");
+
+	//check first and last block
+	if (atoi(blocks[0]) != 0)
+	{
+		printf("Block [%i] out of order\n", atoi(blocks[0]));
+	}
+
+	if (atoi(blocks[numBlocks - 1]) != numBlocks - 1)
+	{
+		printf("Block [%i] out of order\n", atoi(blocks[numBlocks - 1]));
+	}
+
+    int notFound[BUFLEN] = {0};
+
+	//check that all blocks are pressent
+    for (int i = 0; i < numBlocks; i++)
+    {
+		//if ((blocks[i] + 1) != blocks[i + 1] && i < (numBlocks - 1))
+		if ((atoi(blocks[i]) + 1) != (atoi(blocks[i + 1]) && i < (numBlocks - 1)))
+		{
+			printf("Block [%i] out of order\n", atoi(blocks[i]));
+			printf("\tblocks[i] + 1 is: %i, blocks[i + 1] is: %i\n", atoi(blocks[i]) + 1, atoi(blocks[i + 1]));
+		}
+		else
+		{
+			for (int j = 0; j < numBlocks; j++)
+			{
+				if (atoi(blocks[j]) == i || notFound[j] == 2)
+				{
+					notFound[i] = 2;
+					break;
+				}
+				else
+				{
+					notFound[i] = 1;
+				}
+			}
+		}
+    }
+
+    // check for missing blocks
+    for (int i = 0; i < numBlocks; i++)
+    {
+    	if (notFound[i] == 1)
+    	{
+    		printf("Block [%i] was not found.\n", i);
+    	}
+    }  
+
+	printf("*****************************************************\n");
+
+    // Clean up memory
+ 	for (int i = 0; i < numBlocks; i++)
+ 	{
+ 		free(blocks[i]);
+ 	}
+
+    free(blocks);
 
 	return status;
 }
