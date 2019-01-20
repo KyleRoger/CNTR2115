@@ -20,7 +20,9 @@
 #include <string.h>
 #include <malloc.h>
 
-
+#ifdef _WIN32
+#pragma warning(disable:4996)
+#endif
 
 
 /********PROTOTYPES*******/
