@@ -19,7 +19,7 @@ int readTCP(socketInfo benchMarkConnection)
     char **blocks;
 
     // Create space in memory to store incoming blocks
-    blocks = (char**)malloc(numBlocks * sizeof(char *));
+    blocks = (char**)malloc((numBlocks + 1) * sizeof(char *));
     if (blocks == NULL)
     {
     	printf("%s\n", "Out of memory");
@@ -187,33 +187,43 @@ int readTCP(socketInfo benchMarkConnection)
 	printf("\nSocket test report\n");
 	printf("*****************************************************\n");
 
-	//check that all blocks are in order	
-    for (int i = 0; i < numBlocks; i++)
-    {
-        if (blocks[i][0] + 1 != blocks[i + 1][0])
-        {
-            printf("Block [%i] out of order\n", atoi(blocks[i]));
-        	printf("\tblocks[i] is: %i, blocks[i + 1] is: %i\n", atoi(blocks[i]), atoi(blocks[i + 1]));
-        }
+	//check first and last block
+	if (atoi(blocks[0]) != 0)
+	{
+		printf("Block [%i] out of order\n", atoi(blocks[0]));
+	}
 
-    }
+	if (atoi(blocks[numBlocks - 1]) != numBlocks - 1)
+	{
+		printf("Block [%i] out of order\n", atoi(blocks[numBlocks - 1]));
+	}
 
     int notFound[BUFLEN] = {0};
 
 	//check that all blocks are pressent
     for (int i = 0; i < numBlocks; i++)
     {
-    	for (int j = 0; j < numBlocks; j++)
-    	{
-    		if (atoi(blocks[j]) == i)
-    		{
-    			continue;
-    		}
-    		else
-    		{
-    			notFound[i] = 1;
-    		}    		
-    	}
+		//if ((blocks[i] + 1) != blocks[i + 1] && i < (numBlocks - 1))
+		if ((atoi(blocks[i]) + 1) != (atoi(blocks[i + 1]) && i < (numBlocks - 1)))
+		{
+			printf("Block [%i] out of order\n", atoi(blocks[i]));
+			printf("\tblocks[i] + 1 is: %i, blocks[i + 1] is: %i\n", atoi(blocks[i]) + 1, atoi(blocks[i + 1]));
+		}
+		else
+		{
+			for (int j = 0; j < numBlocks; j++)
+			{
+				if (atoi(blocks[j]) == i || notFound[j] == 2)
+				{
+					notFound[i] = 2;
+					break;
+				}
+				else
+				{
+					notFound[i] = 1;
+				}
+			}
+		}
     }
 
     // check for missing blocks
