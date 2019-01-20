@@ -32,3 +32,4 @@ int runClient(int argc, char* argv[]);
 /********CONSTANTS*******/
 #define SUCCESS 1
 #define FAILURE 0
+#define DEBUG			//debugging messages
