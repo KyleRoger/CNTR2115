@@ -14,9 +14,12 @@ int readTCP(socketInfo benchMarkConnection)
     int num = benchMarkConnection.numBlocks;
     int size = benchMarkConnection.blockSize;
     int port = benchMarkConnection.userPort;
-    char allBlocks[100][BUFLEN];
+    char allBlocks[10][BUFLEN];
     int recv_len = 0;
+    char *blocks = (char*)malloc(num * size);
 
+    // blocks[0] = 5;
+    *(blocks + 1) = 5;
 
 
 	#ifdef _WIN32
@@ -220,11 +223,21 @@ int readTCP(socketInfo benchMarkConnection)
         close(benchMarkSocket);
     #endif
 
+    free(blocks);
+        
 	return status;
 }
 
 
 
+/*  
+*   Function Name   : readUDP
+*   Description     : This function takes in an array and checks the data is as expected.
+*                   : Then it prints the report to the screen.
+*   Parameters      : char blockData[][] - The incomeing data from the sockets.
+*                   : int numBlocks - the number of expected blocks sent over the socket.
+*   Returns         : N/A
+*/
 int readUDP(socketInfo benchMarkConnection)
 {
 	int status = SUCCESS;                	//The return value indicating the status or failure of the function.
@@ -404,14 +417,3 @@ int readUDP(socketInfo benchMarkConnection)
 
 	return status;
 }
-
-
-
-/*  
-*   Function Name   : report
-*   Description     : This function takes in an array and checks the data is as expected.
-*                   : Then it prints the report to the screen.
-*   Parameters      : char blockData[][] - The incomeing data from the sockets.
-*                   : int numBlocks - the number of expected blocks sent over the socket.
-*   Returns         : N/A
-*/
