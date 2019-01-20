@@ -160,8 +160,13 @@ int runClient(int argc, char* argv[])
 				        //shut server down
 				        close(initial_socket);
 				    #endif
-
+#ifdef _WIN32
 Sleep(1000);
+#endif
+#ifdef linux
+sleep(1);
+#endif
+
 #ifdef _WIN32
 				if ((retval = WSAStartup(MAKEWORD(2,2), &wsaData)) != 0) 
 				{
@@ -170,8 +175,7 @@ Sleep(1000);
 				}
 				else
 #endif
-				{
-					
+				{					
 					server.sin_family = AF_INET;
 					server.sin_port = htons(userPort);
 					server.sin_addr.s_addr = inet_addr(serverIP);
@@ -196,11 +200,10 @@ Sleep(1000);
 					{
 						if (connect(message_socket, (struct sockaddr*)&server, sizeof(server)) < 0) 
 						{
-							printf("connect() failed: %s \n", serverIP);
+							printf("Connect() failed to connect to server at ip: %s \n", serverIP);
 #ifdef _WIN32									
-							printf("\nConnect() failed with error code : %d\n" , WSAGetLastError());
-							WSACleanup();
-#endif			
+							printf("\tConnect() failed with error code : %d\n" , WSAGetLastError());
+							WSACleanup();#endif			
 						}
 					
 						for(i =  0; i < numBlocks; i++)
