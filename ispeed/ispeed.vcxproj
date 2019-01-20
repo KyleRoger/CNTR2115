@@ -20,8 +20,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{6CE82B95-B152-4E00-875C-4BE1E91DD980}</ProjectGuid>
-    <RootNamespace>AKraayenbrinkKHorsleyAssignment1</RootNamespace>
+    <ProjectGuid>{35BFBA51-AF1D-4CE0-975C-0C9249121270}</ProjectGuid>
+    <RootNamespace>ispeed</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -115,6 +115,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\server\src\benchMarkTests.c" />
+    <ClCompile Include="..\server\src\firstConnect.c" />
+    <ClCompile Include="..\server\src\main.c" />
+    <ClCompile Include="..\server\src\server.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\server\inc\server.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

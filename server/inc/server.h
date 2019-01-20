@@ -18,6 +18,9 @@
 #include <time.h>
 #include <malloc.h>
 
+#ifdef _WIN32
+	#pragma warning(disable:4996)
+#endif
 #ifdef linux
 	#include <ifaddrs.h>
 	#include <linux/if_link.h>
