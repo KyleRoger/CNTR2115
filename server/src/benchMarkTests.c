@@ -11,16 +11,31 @@ int readTCP(socketInfo benchMarkConnection)
     int     server_len      = 0;                //The size of the client_addr struct.
     char block[BUFLEN] = {'\0'};
     int sType = benchMarkConnection.socketType;
-    int num = benchMarkConnection.numBlocks;
-    int size = benchMarkConnection.blockSize;
+    int numBlocks = benchMarkConnection.numBlocks;
+    int blockSize = benchMarkConnection.blockSize;
     int port = benchMarkConnection.userPort;
     char allBlocks[10][BUFLEN];
     int recv_len = 0;
-    char *blocks = (char*)malloc(num * size);
+    char **blocks;
 
-    // blocks[0] = 5;
-    *(blocks + 1) = 5;
+    // Create space in memory to store incoming blocks
+    blocks = (char**)malloc(numBlocks * sizeof(char *));
+    if (blocks == NULL)
+    {
+    	printf("%s\n", "Out of memory");
+    	status = FAILURE;
+    }
 
+    for (int i = 0; i < numBlocks; i++)
+    {
+    	blocks[i] = malloc(blockSize * sizeof(char));
+    	if (blocks[i] == NULL)
+    	{
+    		printf("%s\n", "Out of memory");
+    		status = FAILURE;
+    		break;
+    	}
+    }
 
 	#ifdef _WIN32
         SOCKET benchMarkSocket = 0;           	//This is the socket used by the server to get information about the benchmarking socket
@@ -132,7 +147,7 @@ int readTCP(socketInfo benchMarkConnection)
 
 
 	    #ifdef DEBUG
-	        printf("Number of blocks is:%i, Block size is: %i\n", num, size);
+	        printf("Number of blocks is:%i, Block size is: %i\n", numBlocks, blockSize);
 	        printf("\n%s\n", "benchmark socket accepted");
 	    #endif
 
@@ -140,24 +155,24 @@ int readTCP(socketInfo benchMarkConnection)
 	    float startTime = (float)clock()/CLOCKS_PER_SEC;
 	    
 	    //read the data from the socket
-	    for (int i = 0; i < num; i++)
+	    for (int i = 0; i < numBlocks; i++)
 	    {    
 
 	        #ifdef _WIN32
-	            if (recv (client_socket, block, size, 0) < 0)
+	            if (recv (client_socket, block, blockSize, 0) < 0)
 	            {
 	                printf ("[benchMarkSocket] : socket() recv FAILED. \nErrno returned %s\n", strerror(errno));
 	                printf("recv failed with error: %d\n", WSAGetLastError());
 	            }
 	        #endif
 	        #ifdef linux
-	            if (read (client_socket, block, size) < 0)
+	            if (read (client_socket, block, blockSize) < 0)
 	            {
 	                printf ("[benchMarkSocket] : socket() recv FAILED. \nErrno returned %i\n", errno);
 	            }
 	        #endif
-
-	        strcpy(allBlocks[i], block);
+            strcpy(blocks[i], block);
+	        // strcpy(allBlocks[i], block);
 	        #ifdef DEBUG
 	            printf("Read: %s", block);
 	            printf(" Size is %zu\n", sizeof(block));
@@ -173,12 +188,12 @@ int readTCP(socketInfo benchMarkConnection)
 	printf("*****************************************************\n");
 
 	//check that all blocks are in order	
-    for (int i = 0; i < num; i++)
+    for (int i = 0; i < numBlocks; i++)
     {
-        if (atoi(allBlocks[i]) + 1 != atoi(allBlocks[i + 1]))
+        if (blocks[i][0] + 1 != blocks[i + 1][0])
         {
-            printf("Block [%i] out of order\n", atoi(allBlocks[i]));
-        	printf("\tallBlocks[i] is: %i, allBlocks[i + 1] is: %i\n", atoi(allBlocks[i]), atoi(allBlocks[i + 1]));
+            printf("Block [%i] out of order\n", atoi(blocks[i]));
+        	printf("\tblocks[i] is: %i, blocks[i + 1] is: %i\n", atoi(blocks[i]), atoi(blocks[i + 1]));
         }
 
     }
@@ -186,11 +201,11 @@ int readTCP(socketInfo benchMarkConnection)
     int notFound[BUFLEN] = {0};
 
 	//check that all blocks are pressent
-    for (int i = 0; i < num; i++)
+    for (int i = 0; i < numBlocks; i++)
     {
-    	for (int j = 0; j < num; j++)
+    	for (int j = 0; j < numBlocks; j++)
     	{
-    		if (atoi(allBlocks[j]) == i)
+    		if (atoi(blocks[j]) == i)
     		{
     			continue;
     		}
@@ -202,7 +217,7 @@ int readTCP(socketInfo benchMarkConnection)
     }
 
     // check for missing blocks
-    for (int i = 0; i < num; i++)
+    for (int i = 0; i < numBlocks; i++)
     {
     	if (notFound[i] == 1)
     	{
@@ -223,8 +238,14 @@ int readTCP(socketInfo benchMarkConnection)
         close(benchMarkSocket);
     #endif
 
+    // Clean up memory
+ 	for (int i = 0; i < numBlocks; i++)
+ 	{
+ 		free(blocks[i]);
+ 	}
+
     free(blocks);
-        
+
 	return status;
 }
 
