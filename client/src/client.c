@@ -13,7 +13,7 @@ int runClient(int argc, char* argv[])
 	int userPort = 0;
 	int numBlocks = 0;
 	int blockSize = 0;
-	char* block = NULL;
+	char block[10000] = {'\0'};
 	char* serverIP = NULL;
 	int retval = 0;
 	char * buffer = NULL;
@@ -88,7 +88,7 @@ int runClient(int argc, char* argv[])
 		}
 		else
 		{
-			if(blockSize == 1000)
+			/*if(blockSize == 1000)
 			{
 				block = block1000;
 			}
@@ -103,7 +103,7 @@ int runClient(int argc, char* argv[])
 			else if( blockSize == 10000)
 			{
 				block = block10000;
-			}
+			}*/
 		}
 
 #ifdef _WIN32
@@ -161,10 +161,10 @@ int runClient(int argc, char* argv[])
 				        close(initial_socket);
 				    #endif
 #ifdef _WIN32
-Sleep(1000);
+				Sleep(1000);
 #endif
 #ifdef linux
-sleep(1);
+				sleep(1);
 #endif
 
 #ifdef _WIN32
@@ -182,10 +182,12 @@ sleep(1);
 
 					if(socketType == SOCK_STREAM)
 					{
+						printf("%s\n", "TCP socket connecting...");
 						message_socket = socket(AF_INET, SOCK_STREAM, 0);
 					}
 					else 
 					{
+						printf("%s\n", "UDP socket connecting...");
 						message_socket = socket(AF_INET, SOCK_DGRAM, 0);
 					} 
 					if (message_socket < 0) 
@@ -203,7 +205,8 @@ sleep(1);
 							printf("Connect() failed to connect to server at ip: %s \n", serverIP);
 #ifdef _WIN32									
 							printf("\tConnect() failed with error code : %d\n" , WSAGetLastError());
-							WSACleanup();#endif			
+							WSACleanup();
+#endif			
 						}
 					
 						for(i =  0; i < numBlocks; i++)
@@ -234,16 +237,16 @@ sleep(1);
 						printf("\n%s\n", "Finnished sending blocks, sending Bye");
 						#endif
 
-						strcpy(buf, "Bye");
+/*						strcpy(buf, "Bye");
 						retval = send(initial_socket, buf, sizeof(buf), 0);
 						if (retval < 0) 
-								{
-									printf("send() failed: error %d\n", i);
+						{
+							printf("send() failed: error %d\n", i);
 #ifdef _WIN32					
-									WSACleanup();
+							WSACleanup();
 #endif					
-									return 0;
-								}
+							return 0;
+						}*/
 #ifdef _WIN32
 						closesocket(message_socket);
 						closesocket(initial_socket);
