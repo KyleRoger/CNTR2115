@@ -233,6 +233,9 @@ int runClient(int argc, char* argv[])
 							memset(block, 0, blockSize);
 						}
 
+						//empty message indicates we are done
+						send(message_socket, '0', 0, 0);
+
 						#ifdef DEBUG
 						printf("\n%s\n", "Finnished sending blocks, sending Bye");
 						#endif
