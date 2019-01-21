@@ -116,52 +116,60 @@ int runServer(int argc, char *argv[])
     int connectInfoPort = DEFAULT_PORT;
     int socketType = DEFAULT_SOCK_TYPE;
     socketInfo benchMarkConnection;             //Struct used to store connection details for the benchmark socket
-  
-    getIP();                                    //Display the server ipv4 address
-
-    //check startup arguments and fireup socket connections
-    if ((connectInfoPort = parseCmdLine(argc, argv)) != INVALID_PARMS)
+    
+    while (exitFlag == RUN)
     {
+        getIP();                                    //Display the server ipv4 address
 
-        status = connectonDetails(&benchMarkConnection);
-
-        #ifdef DEBUG
-            printf("Connect socket returned a status of: %d\n", status);
-            printf("\n%s\n", "Test connection details"); 
-            printf("\tSocket is: %i\n", benchMarkConnection.socketType);
-            printf("\tPort is: %i\n", benchMarkConnection.userPort);
-            printf("\tBlock size is: %i\n", benchMarkConnection.blockSize);
-            printf("\tNumber of blocks is: %i\n\n", benchMarkConnection.numBlocks);
-        #endif           
-    }
-    else
-    {
-        status = FAILURE;
-    }
-
-    if (status == SUCCESS)
-    {
-        if (benchMarkConnection.socketType == SOCK_STREAM)
+        //check startup arguments and fireup socket connections
+        if ((connectInfoPort = parseCmdLine(argc, argv)) != INVALID_PARMS)
         {
+
+            status = connectonDetails(&benchMarkConnection);
+
             #ifdef DEBUG
-            printf("TCP socket\n");
-            #endif
-            status = readTCP(benchMarkConnection);
-        }
-        else if (benchMarkConnection.socketType == SOCK_DGRAM)
-        {
-            #ifdef DEBUG
-            printf("UDP Socket\n");
-            #endif
-            status = readUDP(benchMarkConnection);
+                printf("Connect socket returned a status of: %d\n", status);
+                printf("\n%s\n", "Test connection details"); 
+                printf("\tSocket is: %i\n", benchMarkConnection.socketType);
+                printf("\tPort is: %i\n", benchMarkConnection.userPort);
+                printf("\tBlock size is: %i\n", benchMarkConnection.blockSize);
+                printf("\tNumber of blocks is: %i\n\n", benchMarkConnection.numBlocks);
+            #endif           
         }
         else
         {
-            printf("Not a valid socket type\n");
             status = FAILURE;
         }
-    }
 
+        if (status == SUCCESS)
+        {
+            if (benchMarkConnection.socketType == SOCK_STREAM)
+            {
+                #ifdef DEBUG
+                printf("TCP socket\n");
+                #endif
+                status = readTCP(benchMarkConnection);
+            }
+            else if (benchMarkConnection.socketType == SOCK_DGRAM)
+            {
+                #ifdef DEBUG
+                printf("UDP Socket\n");
+                #endif
+                status = readUDP(benchMarkConnection);
+            }
+            else
+            {
+                printf("Not a valid socket type\n");
+                status = FAILURE;
+            }
+        }
+
+        if (status == FAILURE)
+        {
+            exitFlag = EXIT;
+        }
+    }
+    
 	return status;
 }
 
