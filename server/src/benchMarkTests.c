@@ -177,6 +177,8 @@ int readTCP(socketInfo benchMarkConnection)
 	            printf("Read: %s", block);
 	            printf(" Size is %zu\n", sizeof(block));
 	        #endif
+
+            
 	    }
 
 	    float endTime = (float)clock()/CLOCKS_PER_SEC;
@@ -278,7 +280,7 @@ int readUDP(socketInfo benchMarkConnection)
     int blockSize = benchMarkConnection.blockSize;
     int port = benchMarkConnection.userPort;
     char allBlocks[100][BUFLEN];
-    int recv_len = 0;
+    int recv_len = 1;
     struct sockaddr_in server_addr;     //A struct used for the socket information.
     struct sockaddr_in client_addr;
     int len = sizeof(client_addr);
@@ -415,8 +417,11 @@ int readUDP(socketInfo benchMarkConnection)
             printf(" Size is %zu\n", sizeof(block));
         #endif
     }*/
+
 	//while(exitFlag == RUN)
-    for (int i = 0; i < numBlocks; i++)
+    //for (int i = 0; i < numBlocks; i++)
+    int i = 0;
+    while( recv_len > 0)
 	{
 		printf("Waiting for data...");
 		fflush(stdout);
@@ -439,20 +444,20 @@ int readUDP(socketInfo benchMarkConnection)
 				status = FAILURE;
 			}
 		#endif
-		
-		
+
 		strcpy(blocks[i], block);
 
         #ifdef DEBUG
 	        //print details of the client/peer and the data received
-			printf("Received packet \n");
+			printf("Received packet with a length of: %i \n", recv_len);
 			printf("Data: %s\n" , block);
 
             printf("Read: %s", block);
             printf(" Size is %zu\n", sizeof(block));
         #endif		
-	}
 
+        i++;
+	}
 
     float endTime = (float)clock()/CLOCKS_PER_SEC;
     float elapsedTime = endTime - startTime;
@@ -469,7 +474,7 @@ int readUDP(socketInfo benchMarkConnection)
         close(benchMarkSocket);
     #endif
 
-        	printf("\nSocket test report\n");
+	printf("\nSocket test report\n");
 	printf("*****************************************************\n");
 
 	//check first and last block
