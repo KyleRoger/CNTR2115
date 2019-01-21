@@ -5,7 +5,7 @@
 *  PROGRAMMER    :	Arie Kraayenbrink
 *  Editors	 	 :	Arie Kraayenbrink
 *  FIRST VERSION :	Jan. 8, 2019
-*  DESCRIPTION   :	This file contains the files, constants function prototype and even ...
+*  DESCRIPTION   :	This file contains the files, constants and function prototypes used in ispeed.
 */
 
 
@@ -44,12 +44,8 @@
 /********PROTOTYPES*******/
 void getIP(void);
 int runServer(int argc, char *argv[]);
-int newSocket(int* server_socket, int sockType, int sockPort);
-int intSocket(void);
-int readClient(int benchMarkSocket, int numBlocks, int blockSize, int sockType);
 void showHelp(char** argv);
 int parseCmdLine(int argc, char** argv);
-void testType(socketInfo *testConnection, int serverSocket);
 int connectonDetails(socketInfo *benchMarkConnection);
 int readTCP(socketInfo benchMarkConnection);
 int readUDP(socketInfo benchMarkConnection);
