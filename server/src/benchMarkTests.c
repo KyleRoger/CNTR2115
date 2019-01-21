@@ -372,9 +372,7 @@ int readUDP(socketInfo benchMarkConnection)
     }*/
 
 	//while(exitFlag == RUN)
-    //for (int i = 0; i < numBlocks; i++)
-    int i = 0;
-    while( recv_len > 0)
+    for (int i = 0; i < numBlocks; i++)
 	{
 		printf("Waiting for data...");
 		fflush(stdout);
@@ -408,8 +406,6 @@ int readUDP(socketInfo benchMarkConnection)
             printf("Read: %s", block);
             printf(" Size is %zu\n", sizeof(block));
         #endif		
-
-        i++;
 	}
 
     float endTime = (float)clock()/CLOCKS_PER_SEC;
@@ -426,60 +422,7 @@ int readUDP(socketInfo benchMarkConnection)
         //shut server down
         close(benchMarkSocket);
     #endif
-
-	printf("\nSocket test report\n");
-	printf("*****************************************************\n");
-
-	//check first and last block
-	if (atoi(blocks[0]) != 0)
-	{
-		printf("Block [%i] out of order\n", atoi(blocks[0]));
-	}
-
-	if (atoi(blocks[numBlocks - 1]) != numBlocks - 1)
-	{
-		printf("Block [%i] out of order\n", atoi(blocks[numBlocks - 1]));
-	}
-
-    int notFound[BUFLEN] = {0};
-
-	//check that all blocks are pressent
-    for (int i = 0; i < numBlocks; i++)
-    {
-		//if ((blocks[i] + 1) != blocks[i + 1] && i < (numBlocks - 1))
-		if ((atoi(blocks[i]) + 1) != (atoi(blocks[i + 1]) && i < (numBlocks - 1)))
-		{
-			printf("Block [%i] out of order\n", atoi(blocks[i]));
-			printf("\tblocks[i] + 1 is: %i, blocks[i + 1] is: %i\n", atoi(blocks[i]) + 1, atoi(blocks[i + 1]));
-		}
-		else
-		{
-			for (int j = 0; j < numBlocks; j++)
-			{
-				if (atoi(blocks[j]) == i || notFound[j] == 2)
-				{
-					notFound[i] = 2;
-					break;
-				}
-				else
-				{
-					notFound[i] = 1;
-				}
-			}
-		}
-    }
-
-    // check for missing blocks
-    for (int i = 0; i < numBlocks; i++)
-    {
-    	if (notFound[i] == 1)
-    	{
-    		printf("Block [%i] was not found.\n", i);
-    	}
-    }  
-
-	printf("*****************************************************\n");
-
+	
     // Clean up memory
  	for (int i = 0; i < numBlocks; i++)
  	{
