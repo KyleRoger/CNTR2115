@@ -13,7 +13,7 @@ int runClient(int argc, char* argv[])
 	int userPort = 0;
 	int numBlocks = 0;
 	int blockSize = 0;
-	char block[10000] = "";
+	char* block;
 	char* serverIP = NULL;
 	int retval = 0;
 	char * buffer = NULL;
@@ -90,28 +90,19 @@ int runClient(int argc, char* argv[])
 		{
 			if(blockSize == 1000)
 			{
-				for(i= 0; i < 1000; i++)
-				{
-					block[i] = block1000[i];
-				}
+				block = block1000;
+			}
 			else if(blockSize == 2000)
 			{
-				for(i= 0; i < 2000; i++)
-				{
-					block[i] = block2000[i];
-				}
+				block = block2000;
+			}
 			else if(blockSize == 5000)
 			{
-				for(i= 0; i < 5000; i++)
-				{
-					block[i] = block5000[i];
-				}
+				block = block5000;
+			}
 			else if(blockSize == 10000)
 			{
-				for(i= 0; i < 10000; i++)
-				{
-					block[i] = block10000[i];
-				}
+				block = block5000;
 			}
 		}
 
@@ -221,8 +212,8 @@ int runClient(int argc, char* argv[])
 						for(i =  0; i < numBlocks; i++)
 						{
            					sprintf(block, "%d", i);
-           					printf("%s ", block);
-           					printf("Block size: %zu\n", sizeof(block));
+           					//printf("%s ", block);
+           					//printf("Block size: %zu\n", sizeof(block));
            					/*int len = sizeof(server);
            					if (sendto(message_socket, block, strlen(block) , 0 , (struct sockaddr *) &server, len) == SOCKET_ERROR)
 							{
@@ -243,7 +234,7 @@ int runClient(int argc, char* argv[])
 						}
 
 						//empty message indicates we are done
-						send(message_socket, '0', 0, 0);
+						send(message_socket, '\0', 0, 0);
 
 						#ifdef DEBUG
 						printf("\n%s\n", "Finnished sending blocks, sending Bye");

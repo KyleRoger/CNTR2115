@@ -178,16 +178,21 @@ int readTCP(socketInfo benchMarkConnection)
             if (recv_len > 0)
             {
             	blocksRecvCount++;
+
+                if(i == atoi(block))
+                {
+                    blocksInOrderCount++;
+                }
             }
 
-	        if (recv_len > 0 && atoi(block) == i)
+/*	        if (recv_len > 0 && atoi(block) == i)
 	        {
 	        	blocksInOrderCount++;
-	        }
+	        }*/
 	        	       
 	        #ifdef DEBUG
-	            printf("Read: %s", block);
-	            printf(" Size is %zu\n", sizeof(block));
+	            //printf("Read: %s", block);
+	            //printf(" Size is %zu\n", sizeof(block));
 	        #endif
 	    }
 
