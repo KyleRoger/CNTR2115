@@ -21,14 +21,11 @@
 * ------------------------------------------------------------------------
 */
 
-
-
 #include "../inc/server.h"
 
 #undef UNICODE
 
 volatile int exitFlag = RUN;
-
 
 
 /*  
@@ -165,3 +162,58 @@ int runServer(int argc, char *argv[])
 
 	return status;
 }
+
+
+
+/*  
+*   Function Name   : parseCmdLine
+*   Description     : This function takes in agruments from the command line and seperate them into useful parts.
+*                   : It also does checks for invalid input. 
+*                   : Then it saves the arguments status for later use before returning the outcome of checks made. 
+*   Parameters      : int argc - number of command line arguments
+*                   : char** argv - where the command line arguments are
+*   Returns         : int retCode - type of input, valid or otherwise, provided as arguments in the command line.
+*/
+int parseCmdLine(int argc, char** argv)
+{
+
+    int retCode = 0; //return code to let calling function know what to do.
+    
+    if (argc != 3)
+    {
+        showHelp(argv); //print help and quit
+        retCode = INVALID_PARMS;
+    }
+    else if (argv[1][0] == '-' && argv[1][1] == 'p' && argv[1][2] == '\0') //look for a -p switch in the second parmeter.
+    {           
+        retCode = atoi (argv[2]);;
+    }
+    else
+    {
+        showHelp(argv); //print help and quit
+        retCode = INVALID_PARMS;
+    }
+
+    return retCode;
+} //end parseCmdLine function
+
+
+
+/*  
+*   Function Name   : showHelp
+*   Description     : Display a help message to the screen.
+*                   : Currently this function only deals with one help message
+*                   : This message is basically just a quck usage statement.
+*                   :
+*   Parameters      : char** argv - what the command line arguments are.
+*                   : 
+*   Returns         : N/A
+*/
+void showHelp(char** argv)
+{
+    //This is basically just a quck usage statement.
+    //show PROGRAM useage
+    printf("Usage:\t%s <arguments>\n", argv[0]);
+    printf("\t\t\t-p <port>\t: the port number for socket communication\n");
+
+} //end showHelp function
