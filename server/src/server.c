@@ -1,13 +1,16 @@
 /*
 * -----------------------------------------------------------------------
-* File			: makefile
+* File			: server.c
 * Project		: ispeed
 * Author 		: Arie Kraayenbrink
 * Editors		: Arie kraayenbrink
 * Date 			: Jan. 8, 2019
-* Description 	: This makefile will compile and link all source files
-*             	: in the server part of the system.  
-*				: 
+* Description 	: This file has the function that starts and runs the server. It also parses the command line input to find the 
+*               : starting port numer. The server ip address is also printed to the screen.
+*               : The server first creates a TCP socket to find out what kind of connection is required for the benchmarking tests.  
+*				: It then uses either TCP or UPD as specified on the requested port to do benchmarking of the speed of the choosen 
+*               : socket type.
+*               :
 *				: Steps for creating windows TCP sockets on server.
 *				   1. Initialize Winsock.
 *				   2. Create a socket.
@@ -169,7 +172,7 @@ int runServer(int argc, char *argv[])
             exitFlag = EXIT;
         }
     }
-    
+
 	return status;
 }
 
