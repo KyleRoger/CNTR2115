@@ -13,14 +13,14 @@ int runClient(int argc, char* argv[])
 	int userPort = 0;
 	int numBlocks = 0;
 	int blockSize = 0;
-	char block[10000] = {'\0'};
+	char block[10000] = "";
 	char* serverIP = NULL;
 	int retval = 0;
 	char * buffer = NULL;
-	char block1000[1000] = "";
-	char block2000[2000] = "";
-	char block5000[5000] = "";
-	char block10000[10000] = "";
+	char block1000[1000] = {'\0'};
+	char block2000[2000] = {'\0'};
+	char block5000[5000] = {'\0'};
+	char block10000[10000] = {'\0'};
 	char buf[BUFSIZ] = {'\0'};
 	unsigned int addr;
 	struct sockaddr_in server;
@@ -85,6 +85,34 @@ int runClient(int argc, char* argv[])
 		{
 			printf("Invalid Number of Blocks\n");
 			return 0;
+		}
+		else
+		{
+			if(blockSize == 1000)
+			{
+				for(i= 0; i < 1000; i++)
+				{
+					block[i] = block1000[i];
+				}
+			else if(blockSize == 2000)
+			{
+				for(i= 0; i < 2000; i++)
+				{
+					block[i] = block2000[i];
+				}
+			else if(blockSize == 5000)
+			{
+				for(i= 0; i < 5000; i++)
+				{
+					block[i] = block5000[i];
+				}
+			else if(blockSize == 10000)
+			{
+				for(i= 0; i < 10000; i++)
+				{
+					block[i] = block10000[i];
+				}
+			}
 		}
 
 #ifdef _WIN32
