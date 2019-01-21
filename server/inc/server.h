@@ -34,7 +34,7 @@
 #define INVALID_PARMS -1
 #define RUN 	1
 #define EXIT 	0
-#define BUFLEN 10000	//Max length of buffer
+#define BUFLEN 100000	//Max length of buffer
 #define PORT 15008		//The port on which to listen for incoming data
 
 #define DEBUG			//debugging messages
