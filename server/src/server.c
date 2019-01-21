@@ -21,11 +21,14 @@
 * ------------------------------------------------------------------------
 */
 
+
+
 #include "../inc/server.h"
 
 #undef UNICODE
 
 volatile int exitFlag = RUN;
+
 
 
 /*  
@@ -56,7 +59,6 @@ void getIP(void)
         {
             /* Walk through linked list, maintaining head pointer so we
               can free list later */
-
             for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
                if (ifa->ifa_addr == NULL)
                    continue;
@@ -64,7 +66,6 @@ void getIP(void)
                family = ifa->ifa_addr->sa_family;
 
                /* For an AF_INET* interface address, display the address */
-
                if (family == AF_INET) {
                    s = getnameinfo(ifa->ifa_addr,
                            (family == AF_INET) ? sizeof(struct sockaddr_in) :
@@ -94,9 +95,10 @@ void getIP(void)
 *                   : The basic flow of things is, create and bind to a socket, listen on that socket,
 *                   : 
 *                   : 
-*   Parameters      : N/A
+*   Parameters      : int argc      : The number of command line arguments.
+*                   : char *argv[]  : The command line arguments
 *                   :
-*   Returns         : int status: the return value indicating the success or failure of the function
+*   Returns         : int status    : the return value indicating the success or failure of the function
 */
 int runServer(int argc, char *argv[])
 {
@@ -144,14 +146,14 @@ int runServer(int argc, char *argv[])
             #ifdef DEBUG
             printf("TCP socket\n");
             #endif
-            readTCP(benchMarkConnection);
+            status = readTCP(benchMarkConnection);
         }
         else if (benchMarkConnection.socketType == SOCK_DGRAM)
         {
             #ifdef DEBUG
             printf("UDP Socket\n");
             #endif
-            readUDP(benchMarkConnection);
+            status = readUDP(benchMarkConnection);
         }
         else
         {
