@@ -16,6 +16,8 @@ int readTCP(socketInfo benchMarkConnection)
     int port = benchMarkConnection.userPort;
     char allBlocks[10][BUFLEN];
     int recv_len = 0;
+    int blocksInOrderCount = 0;
+    int blocksRecvCount = 0;
     char **blocks;
 
     // Create space in memory to store incoming blocks
@@ -152,12 +154,11 @@ int readTCP(socketInfo benchMarkConnection)
 	    #endif
 
 	    // Start timer
-	    float startTime = (float)clock()/CLOCKS_PER_SEC;
+	    float startTime = (float)clock();
 	    
 	    //read the data from the socket
 	    for (int i = 0; i < numBlocks; i++)
 	    {    
-
 	        #ifdef _WIN32
 	            if (recv (client_socket, block, blockSize, 0) < 0)
 	            {
@@ -171,33 +172,50 @@ int readTCP(socketInfo benchMarkConnection)
 	                printf ("[benchMarkSocket] : socket() recv FAILED. \nErrno returned %i\n", errno);
 	            }
 	        #endif
+
+            if (recv_len > 0)
+            {
+            	blocksRecvCount++;
+            }
+
+	        if (recv_len > 0 && atoi(block) == i)
+	        {
+	        	blocksInOrderCount++;
+	        }
+
             strcpy(blocks[i], block);
 	        // strcpy(allBlocks[i], block);
 	        #ifdef DEBUG
 	            printf("Read: %s", block);
 	            printf(" Size is %zu\n", sizeof(block));
 	        #endif
-
-            
 	    }
 
-	    float endTime = (float)clock()/CLOCKS_PER_SEC;
-	    float elapsedTime = endTime - startTime;
-	    printf("The measured time is: %f\n", elapsedTime);
+	    float endTime = (float)clock();
+	    float elapsedTime = endTime - startTime;	    
 	}
 
-	printf("\nSocket test report\n");
-	printf("*****************************************************\n");
+	#ifdef DEBUG
+		printf("\nSocket test report\n");
+		printf("*****************************************************\n");
+
+	    printf("The measured time is: %f\n", elapsedTime);
+	    printf("Number of blocks recieved in order is %i out of %i.\n", blocksInOrderCount, blocksRecvCount);
+    #endif
 
 	//check first and last block
 	if (atoi(blocks[0]) != 0)
 	{
-		printf("Block [%i] out of order\n", atoi(blocks[0]));
+		#ifdef DEBUG
+			printf("Block [%i] out of order\n", atoi(blocks[0]));
+	    #endif
 	}
 
 	if (atoi(blocks[numBlocks - 1]) != numBlocks - 1)
 	{
-		printf("Block [%i] out of order\n", atoi(blocks[numBlocks - 1]));
+		#ifdef DEBUG
+			printf("Block [%i] out of order\n", atoi(blocks[numBlocks - 1]));
+	    #endif
 	}
 
     int notFound[BUFLEN] = {0};
@@ -205,27 +223,7 @@ int readTCP(socketInfo benchMarkConnection)
 	//check that all blocks are pressent
     for (int i = 0; i < numBlocks; i++)
     {
-		//if ((blocks[i] + 1) != blocks[i + 1] && i < (numBlocks - 1))
-		if ((atoi(blocks[i]) + 1) != (atoi(blocks[i + 1]) && i < (numBlocks - 1)))
-		{
-			printf("Block [%i] out of order\n", atoi(blocks[i]));
-			printf("\tblocks[i] + 1 is: %i, blocks[i + 1] is: %i\n", atoi(blocks[i]) + 1, atoi(blocks[i + 1]));
-		}
-		else
-		{
-			for (int j = 0; j < numBlocks; j++)
-			{
-				if (atoi(blocks[j]) == i || notFound[j] == 2)
-				{
-					notFound[i] = 2;
-					break;
-				}
-				else
-				{
-					notFound[i] = 1;
-				}
-			}
-		}
+		
     }
 
     // check for missing blocks
@@ -233,12 +231,20 @@ int readTCP(socketInfo benchMarkConnection)
     {
     	if (notFound[i] == 1)
     	{
-    		printf("Block [%i] was not found.\n", i);
+			#ifdef DEBUG
+    			printf("Block [%i] was not found.\n", i);
+		    #endif
     	}
     }  
 
-	printf("*****************************************************\n");
+	#ifdef DEBUG
+		printf("*****************************************************\n");
+	#endif
 
+	int megabytesPerSecond = 0;
+
+	printf("Size: <<%i>> Sent: <<%i>> Time: <<%f>> Speed: <<%i>> Missing: <<%i>> Disordered: <<%i>>\n", 
+		blockSize, numBlocks, elapsedTime, (megabytesPerSecond * 8), , (numBlocks - blocksInOrderCount));
 	 #ifdef _WIN32
         // cleanup
         closesocket(benchMarkSocket);
@@ -281,10 +287,12 @@ int readUDP(socketInfo benchMarkConnection)
     int port = benchMarkConnection.userPort;
     char allBlocks[100][BUFLEN];
     int recv_len = 1;
+    int blocksInOrderCount = 0;
     struct sockaddr_in server_addr;     //A struct used for the socket information.
     struct sockaddr_in client_addr;
     int len = sizeof(client_addr);
     char **blocks;
+
 
     // Create space in memory to store incoming blocks
     blocks = (char**)malloc((numBlocks + 1) * sizeof(char *));
@@ -304,23 +312,6 @@ int readUDP(socketInfo benchMarkConnection)
     		break;
     	}
     }
-
-/* 	if (size == 1000)
- 	{
-    	char allBlocks[BUFLEN][1000]; 		
- 	}
- 	else if (size == 2000)
- 	{
-    	char allBlocks[BUFLEN][2000]; 		
- 	}
- 	else if (size == 5000)
- 	{
-    	char allBlocks[BUFLEN][5000]; 		
- 	}
- 	else
- 	{
-    	char allBlocks[BUFSIZ][10000]; 		
- 	}*/
 
 	#ifdef _WIN32
         SOCKET benchMarkSocket = 0;           	//This is the socket used by the server to get information about the benchmarking socket
