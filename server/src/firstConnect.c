@@ -1,9 +1,33 @@
-
+/*
+* -----------------------------------------------------------------------
+* File			: firstConnect.c
+* Project		: ispeed
+* Author 		: Arie Kraayenbrink
+* Editors		: Arie kraayenbrink
+* Date 			: Jan. 8, 2019
+* Description 	: This file handles the first connection between the client
+*				: and server. The client sends the desired socket type and
+*				: port as well as details about the block size and number.
+*				: This information is gathered and stored in a struct for 
+*				: later use in the benchmark connection.
+*
+* ------------------------------------------------------------------------
+*/
 
 
 
 #include "../inc/server.h"
 
+
+
+/*  
+*   Function Name   : connectonDetails
+*   Description     : This function reads data from a client sent over a TCP socket.
+*					: The data expected is details about the benchmark socket connection.
+*                   : Then it stores these details in a struct.
+*   Parameters      : socketInfo *benchMarkConnection : A struct with the connection details.
+*   Returns         : int status : The success or failure of the function.
+*/
 int connectonDetails(socketInfo *benchMarkConnection)
 {
 	int status = SUCCESS;
@@ -21,7 +45,6 @@ int connectonDetails(socketInfo *benchMarkConnection)
  	// Initialze winsock
     #ifdef _WIN32
         WSADATA wsaData;
-        //result = WSAStartup(MAKEWORD(2,2), &wsaData);
         WORD ver = MAKEWORD(2, 2);
 
         int result = WSAStartup(ver, &wsaData);
@@ -67,13 +90,13 @@ int connectonDetails(socketInfo *benchMarkConnection)
             #endif
 
             #ifdef linux
+                
                 //shut server down
             	printf ("[SERVER] : bind() FAILED. \nErrno returned %i, %s\n", errno, strerror(errno));
                 close(connectInfoSocket);
             #endif
             status = FAILURE;
         }
-
     }
 
     /*

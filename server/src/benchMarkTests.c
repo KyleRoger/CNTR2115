@@ -1,14 +1,36 @@
+/*
+* -----------------------------------------------------------------------
+* File			: benchMarkTests.c
+* Project		: ispeed
+* Author 		: Arie Kraayenbrink
+* Editors		: Arie kraayenbrink
+* Date 			: Jan. 8, 2019
+* Description 	: This file has the functions for testing/benchmarking the 
+*               : TCP and UDP sockets.
+*
+* ------------------------------------------------------------------------
+*/
+
 
 
 #include "../inc/server.h"
 
 
-extern int exitFlag;
 
+extern int exitFlag;	// controls main loop in server.c
+
+
+/*  
+*   Function Name   : readTCP
+*   Description     : This function reads data from a client sent over a TCP socket.
+*                   : Then it prints the report to the screen.
+*   Parameters      : socketInfo benchMarkConnection : A struct with the connection details.
+*   Returns         : int status : The success or failure of the function.
+*/
 int readTCP(socketInfo benchMarkConnection)
 {
-	int     status = SUCCESS;                //The return value indicating the status or failure of the function.
-    int     server_len      = 0;                //The size of the client_addr struct.
+	int     status = SUCCESS;                		//The return value indicating the status or failure of the function.
+    int     server_len      = 0;                	//The size of the client_addr struct.
     char block[BUFLEN] = {'\0'};
     int sType = benchMarkConnection.socketType;
     int numBlocks = benchMarkConnection.numBlocks;
@@ -32,7 +54,6 @@ int readTCP(socketInfo benchMarkConnection)
  	// Initialze winsock
     #ifdef _WIN32
         WSADATA wsaData;
-        //result = WSAStartup(MAKEWORD(2,2), &wsaData);
         WORD ver = MAKEWORD(2, 2);
 
         int result = WSAStartup(ver, &wsaData);
@@ -62,7 +83,6 @@ int readTCP(socketInfo benchMarkConnection)
     }
     else
     {
-
         memset (&server_addr, 0, sizeof (server_addr));
         server_addr.sin_family = AF_INET;
         server_addr.sin_addr.s_addr = htonl (INADDR_ANY);
@@ -85,7 +105,6 @@ int readTCP(socketInfo benchMarkConnection)
             #endif
             status = FAILURE;
         }
-
     }
 
     /*
@@ -115,6 +134,7 @@ int readTCP(socketInfo benchMarkConnection)
         #ifdef DEBUG
             printf("%s\n", "Block till client is accepted");
         #endif
+
 	    /*
 	    * accept a packet from the client.
 	    * this is a blocking operation.
@@ -127,7 +147,6 @@ int readTCP(socketInfo benchMarkConnection)
 	          fflush(stdout);   
 	          status = FAILURE;
 	    }
-
 
 	    #ifdef DEBUG
 	        printf("Number of blocks is:%i, Block size is: %i\n", numBlocks, blockSize);
@@ -165,21 +184,20 @@ int readTCP(socketInfo benchMarkConnection)
             }
 	        	       
 	        #ifdef DEBUG
-	            //printf("Read: %s", block);
-	            //printf(" Size is %zu\n", sizeof(block));
+	            printf("Read: %s", block);
+	            printf(" Size is %zu\n", sizeof(block));
 	        #endif
 	    }
 
 	    float endTime = (float)clock() / CLOCKS_PER_SEC;
 	    elapsedTime = endTime - startTime;	    
 	}
+
 	long bytes = blocksRecvCount * blockSize;
 	double bytesPerSecond = (bytes / elapsedTime);
 	float megabytesPerSecond = (bytesPerSecond / 1000000);
 	double megabitsPerSecond = (megabytesPerSecond * 8);
 	
-	//millis = (double)((end.tv_sec * 1000000 + end.tv_usec) - (start.tv_sec * 1000000 + start.tv_usec)) / 1000000;
-
 	int missing = numBlocks - blocksRecvCount;
 	int disordered = numBlocks - blocksInOrderCount;
 	float millis = elapsedTime * 1000;
@@ -187,6 +205,7 @@ int readTCP(socketInfo benchMarkConnection)
 	#ifdef DEBUG
 		printf("%i\n", blocksRecvCount);
 	#endif
+
 	printf("Size: <<%i>> Sent: <<%i>> Time: <<%f>> Speed: <<%f>> Missing: <<%i>> Disordered: <<%i>>\n", 
 		blockSize, numBlocks, millis, megabitsPerSecond, missing, disordered);
 
@@ -208,15 +227,14 @@ int readTCP(socketInfo benchMarkConnection)
 
 /*  
 *   Function Name   : readUDP
-*   Description     : This function takes in an array and checks the data is as expected.
+*   Description     : This function reads data from a client sent over a UDP socket.
 *                   : Then it prints the report to the screen.
-*   Parameters      : char blockData[][] - The incomeing data from the sockets.
-*                   : int numBlocks - the number of expected blocks sent over the socket.
-*   Returns         : N/A
+*   Parameters      : socketInfo benchMarkConnection : A struct with the connection details.
+*   Returns         : int status : The success or failure of the function.
 */
 int readUDP(socketInfo benchMarkConnection)
 {
-	int status = SUCCESS;                	//The return value indicating the status or failure of the function.
+	int status = SUCCESS;                		//The return value indicating the status or failure of the function.
     char block[BUFLEN] = {'\0'};
     int sType = benchMarkConnection.socketType;
     int numBlocks = benchMarkConnection.numBlocks;
@@ -225,7 +243,7 @@ int readUDP(socketInfo benchMarkConnection)
     int recv_len = 1;
     int blocksInOrderCount = 0;
     int blocksRecvCount = 0;
-    struct sockaddr_in server_addr;     //A struct used for the socket information.
+    struct sockaddr_in server_addr;     		//A struct used for the socket information.
     struct sockaddr_in client_addr;
     int len = sizeof(client_addr);
     
@@ -239,7 +257,6 @@ int readUDP(socketInfo benchMarkConnection)
  	// Initialze winsock
     #ifdef _WIN32
         WSADATA wsaData;
-        //result = WSAStartup(MAKEWORD(2,2), &wsaData);
         WORD ver = MAKEWORD(2, 2);
 
         int result = WSAStartup(ver, &wsaData);
@@ -267,7 +284,6 @@ int readUDP(socketInfo benchMarkConnection)
     }
     else
     {
-
         memset (&server_addr, 0, sizeof (server_addr));
         server_addr.sin_family = AF_INET;
         server_addr.sin_addr.s_addr = htonl (INADDR_ANY);
@@ -300,10 +316,12 @@ int readUDP(socketInfo benchMarkConnection)
     // Start timer
     float startTime = (float)clock()/CLOCKS_PER_SEC;
  
-	//while(exitFlag == RUN)
     for (int i = 0; i < numBlocks; i++)
 	{
-		//printf("Waiting for data...");
+		#ifdef DEBUG
+			printf("Waiting for data...");
+		#endif
+
 		fflush(stdout);
 		
 		//clear the buffer by filling null, it might have previously received data
@@ -360,8 +378,6 @@ int readUDP(socketInfo benchMarkConnection)
 	float megabytesPerSecond = (bytesPerSecond / 1000000);
 	double megabitsPerSecond = (megabytesPerSecond * 8);
 	
-	//millis = (double)((end.tv_sec * 1000000 + end.tv_usec) - (start.tv_sec * 1000000 + start.tv_usec)) / 1000000;
-
 	int missing = numBlocks - blocksRecvCount;
 	int disordered = numBlocks - blocksInOrderCount;
 	float millis = elapsedTime * 1000;

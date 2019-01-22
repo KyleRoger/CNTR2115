@@ -121,13 +121,14 @@ int runServer(int argc, char *argv[])
     socketInfo benchMarkConnection;             //Struct used to store connection details for the benchmark socket
 
     getIP();                                    //Display the server ipv4 address
-    
+
+
+    // loop, reading from the client
     while (exitFlag == RUN)
     {
         //check startup arguments and fireup socket connections
         if ((connectInfoPort = parseCmdLine(argc, argv)) != INVALID_PARMS)
         {
-
             status = connectonDetails(&benchMarkConnection);
 
             #ifdef DEBUG
