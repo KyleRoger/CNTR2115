@@ -1,26 +1,26 @@
 /*
 * -----------------------------------------------------------------------
-* File			: server.c
-* Project		: ispeed
-* Author 		: Arie Kraayenbrink
-* Editors		: Arie kraayenbrink
-* Date 			: Jan. 8, 2019
-* Description 	: This file has the function that starts and runs the server. It also parses the command line input to find the 
+* File          : server.c
+* Project       : ispeed
+* Author        : Arie Kraayenbrink
+* Editors       : Arie kraayenbrink
+* Date          : Jan. 8, 2019
+* Description   : This file has the function that starts and runs the server. It also parses the command line input to find the 
 *               : starting port numer. The server ip address is also printed to the screen.
 *               : The server first creates a TCP socket to find out what kind of connection is required for the benchmarking tests.  
-*				: It then uses either TCP or UPD as specified on the requested port to do benchmarking of the speed of the choosen 
+*               : It then uses either TCP or UPD as specified on the requested port to do benchmarking of the speed of the choosen 
 *               : socket type.
 *               :
-*				: Steps for creating windows TCP sockets on server.
-*				   1. Initialize Winsock.
-*				   2. Create a socket.
-*				   3. Bind the socket.
-*				   4. Listen on the socket for a client.
-*				   5. Accept a connection from a client.
-*				   6. Receive and send data.
-*				   7. Disconnect.
+*               : Steps for creating windows TCP sockets on server.
+*                  1. Initialize Winsock.
+*                  2. Create a socket.
+*                  3. Bind the socket.
+*                  4. Listen on the socket for a client.
+*                  5. Accept a connection from a client.
+*                  6. Receive and send data.
+*                  7. Disconnect.
 *
-* Credit		: https://docs.microsoft.com/en-us/windows/desktop/winsock/getting-started-with-winsock
+* Credit        : https://docs.microsoft.com/en-us/windows/desktop/winsock/getting-started-with-winsock
 * ------------------------------------------------------------------------
 */
 
@@ -105,7 +105,7 @@ void getIP(void)
 */
 int runServer(int argc, char *argv[])
 {
-	int status = SUCCESS;
+    int status = SUCCESS;
 
     #ifdef _WIN32
         SOCKET connectInfoSocket = 0;           //This is the socket used by the server to get information about the benchmarking socket
@@ -174,7 +174,7 @@ int runServer(int argc, char *argv[])
         }
     }
 
-	return status;
+    return status;
 }
 
 
