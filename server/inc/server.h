@@ -37,7 +37,7 @@
 #define BUFLEN 100000	//Max length of buffer
 #define PORT 15008		//The port on which to listen for incoming data
 
-#define DEBUG			//debugging messages
+//#define DEBUG			//debugging messages
 
 
 
