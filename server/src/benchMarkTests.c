@@ -18,29 +18,8 @@ int readTCP(socketInfo benchMarkConnection)
     int blocksInOrderCount = 0;
     int blocksRecvCount = 0;
     int notFound = {0};
-    int outOfOrder[BUFLEN] = {'\0'};
 	float elapsedTime = 0;
-    char **blocks;
-
-    // Create space in memory to store incoming blocks
-    blocks = (char**)malloc((numBlocks + 1) * sizeof(char *));
-    if (blocks == NULL)
-    {
-    	printf("%s\n", "Out of memory");
-    	status = FAILURE;
-    }
-
-    for (int i = 0; i < numBlocks; i++)
-    {
-    	blocks[i] = malloc(blockSize * sizeof(char));
-    	if (blocks[i] == NULL)
-    	{
-    		printf("%s\n", "Out of memory");
-    		status = FAILURE;
-    		break;
-    	}
-    }
-
+   
 	#ifdef _WIN32
         SOCKET benchMarkSocket = 0;           	//This is the socket used by the server to get information about the benchmarking socket
         SOCKET client_socket = 0;				//The client's socket, set by the accept call.
@@ -162,7 +141,7 @@ int readTCP(socketInfo benchMarkConnection)
 	    for (int i = 0; i < numBlocks; i++)
 	    {    
 	        #ifdef _WIN32
-	            if ((recv_len = recv (client_socket, block, blockSize, 0)) < 0)
+	            if ((recv_len = recv (client_socket, block, blockSize, MSG_WAITALL)) < 0)
 	            {
 	                printf ("[benchMarkSocket] : socket() recv FAILED. \nErrno returned %s\n", strerror(errno));
 	                printf("recv failed with error: %d\n", WSAGetLastError());
@@ -184,11 +163,6 @@ int readTCP(socketInfo benchMarkConnection)
                     blocksInOrderCount++;
                 }
             }
-
-/*	        if (recv_len > 0 && atoi(block) == i)
-	        {
-	        	blocksInOrderCount++;
-	        }*/
 	        	       
 	        #ifdef DEBUG
 	            //printf("Read: %s", block);
@@ -209,6 +183,10 @@ int readTCP(socketInfo benchMarkConnection)
 
 	int missing = numBlocks - blocksRecvCount;
 	int disordered = numBlocks - blocksInOrderCount;
+
+	#ifdef DEBUG
+		printf("%i\n", blocksRecvCount);
+	#endif
 	printf("Size: <<%i>> Sent: <<%i>> Time: <<%f>> Speed: <<%f>> Missing: <<%i>> Disordered: <<%i>>\n", 
 		blockSize, numBlocks, elapsedTime, (megabytesPerSecond * 8), missing, disordered);
 
@@ -222,14 +200,6 @@ int readTCP(socketInfo benchMarkConnection)
         //shut server down
         close(benchMarkSocket);
     #endif
-
-    // Clean up memory
- 	for (int i = 0; i < numBlocks; i++)
- 	{
- 		free(blocks[i]);
- 	}
-
-    free(blocks);
 
 	return status;
 }
@@ -252,34 +222,13 @@ int readUDP(socketInfo benchMarkConnection)
     int numBlocks = benchMarkConnection.numBlocks;
     int blockSize = benchMarkConnection.blockSize;
     int port = benchMarkConnection.userPort;
-    char allBlocks[100][BUFLEN];
     int recv_len = 1;
     int blocksInOrderCount = 0;
+    int blocksRecvCount = 0;
     struct sockaddr_in server_addr;     //A struct used for the socket information.
     struct sockaddr_in client_addr;
     int len = sizeof(client_addr);
-    char **blocks;
-
-
-    // Create space in memory to store incoming blocks
-    blocks = (char**)malloc((numBlocks + 1) * sizeof(char *));
-    if (blocks == NULL)
-    {
-    	printf("%s\n", "Out of memory");
-    	status = FAILURE;
-    }
-
-    for (int i = 0; i < numBlocks; i++)
-    {
-    	blocks[i] = malloc(blockSize * sizeof(char));
-    	if (blocks[i] == NULL)
-    	{
-    		printf("%s\n", "Out of memory");
-    		status = FAILURE;
-    		break;
-    	}
-    }
-
+    
 	#ifdef _WIN32
         SOCKET benchMarkSocket = 0;           	//This is the socket used by the server to get information about the benchmarking socket
     #endif
@@ -350,32 +299,7 @@ int readUDP(socketInfo benchMarkConnection)
 
     // Start timer
     float startTime = (float)clock()/CLOCKS_PER_SEC;
-    
-    //read the data from the socket
-   /* for (int i = 0; i < num; i++)
-    {    
-
-        #ifdef _WIN32
-            if (recv (client_socket, block, size, 0) < 0)
-            {
-                printf ("[benchMarkSocket] : socket() recv FAILED. \nErrno returned %s\n", strerror(errno));
-                printf("recv failed with error: %d\n", WSAGetLastError());
-            }
-        #endif
-        #ifdef linux
-            if (read (client_socket, block, size) < 0)
-            {
-                printf ("[benchMarkSocket] : socket() recv FAILED. \nErrno returned %i\n", errno);
-            }
-        #endif
-
-        strcpy(allBlocks[i], block);
-        #ifdef DEBUG
-            printf("Read: %s", block);
-            printf(" Size is %zu\n", sizeof(block));
-        #endif
-    }*/
-
+ 
 	//while(exitFlag == RUN)
     for (int i = 0; i < numBlocks; i++)
 	{
@@ -401,7 +325,15 @@ int readUDP(socketInfo benchMarkConnection)
 			}
 		#endif
 
-		strcpy(blocks[i], block);
+			if (recv_len > 0)
+            {
+            	blocksRecvCount++;
+
+                if(i == atoi(block))
+                {
+                    blocksInOrderCount++;
+                }
+            }
 
         #ifdef DEBUG
 	        //print details of the client/peer and the data received
@@ -415,7 +347,24 @@ int readUDP(socketInfo benchMarkConnection)
 
     float endTime = (float)clock()/CLOCKS_PER_SEC;
     float elapsedTime = endTime - startTime;
-    printf("The measured time is: %f\n", elapsedTime);
+
+	float bytesPerSecond = (blocksRecvCount * blockSize) / elapsedTime;
+	float megabytesPerSecond = bytesPerSecond / 1000000;
+	
+	//millis = (double)((end.tv_sec * 1000000 + end.tv_usec) - (start.tv_sec * 1000000 + start.tv_usec)) / 1000000;
+
+	int missing = numBlocks - blocksRecvCount;
+	int disordered = numBlocks - blocksInOrderCount;
+
+    #ifdef DEBUG
+    	printf("The measured time is: %f\n", elapsedTime);
+		printf("%i\n", blocksRecvCount);
+		printf("Bytes per second %f\n", bytesPerSecond);
+		printf("mega bytes per second %f\n", megabytesPerSecond);
+	#endif
+
+	printf("Size: <<%i>> Sent: <<%i>> Time: <<%f>> Speed: <<%f>> Missing: <<%i>> Disordered: <<%i>>\n", 
+		blockSize, numBlocks, elapsedTime, (megabytesPerSecond * 8), missing, disordered);
 	
 	 #ifdef _WIN32
         // cleanup
@@ -427,14 +376,6 @@ int readUDP(socketInfo benchMarkConnection)
         //shut server down
         close(benchMarkSocket);
     #endif
-	
-    // Clean up memory
- 	for (int i = 0; i < numBlocks; i++)
- 	{
- 		free(blocks[i]);
- 	}
-
-    free(blocks);
 
 	return status;
 }
