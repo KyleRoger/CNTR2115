@@ -119,11 +119,11 @@ int runServer(int argc, char *argv[])
     int connectInfoPort = DEFAULT_PORT;
     int socketType = DEFAULT_SOCK_TYPE;
     socketInfo benchMarkConnection;             //Struct used to store connection details for the benchmark socket
+
+    getIP();                                    //Display the server ipv4 address
     
     while (exitFlag == RUN)
     {
-        getIP();                                    //Display the server ipv4 address
-
         //check startup arguments and fireup socket connections
         if ((connectInfoPort = parseCmdLine(argc, argv)) != INVALID_PARMS)
         {
