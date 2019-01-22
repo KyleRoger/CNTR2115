@@ -12,14 +12,14 @@ int runClient(int argc, char* argv[])
 	int userPort = 0;
 	int numBlocks = 0;
 	int blockSize = 0;
-	char block[10000] =  {'\0'};
+	char* block =  NULL;
 	char* serverIP = NULL;
 	int retval = 0;
 	char * buffer = NULL;
-	char block1000[1000] = {'\0'};
-	char block2000[2000] = {'\0'};
-	char block5000[5000] = {'\0'};
-	char block10000[10000] = {'\0'};
+	char block1000[1000] = "";
+	char block2000[2000] = "";
+	char block5000[5000] =  "";
+	char block10000[10000] = "";
 	char buf[BUFSIZ] = {'\0'};
 	unsigned int addr;
 	struct sockaddr_in server;
@@ -86,7 +86,7 @@ int runClient(int argc, char* argv[])
 			printf("Invalid Number of Blocks\n");
 			return 0;
 		}
-/*		else
+		else
 		{
 			if(blockSize == 1000)
 			{
@@ -104,7 +104,7 @@ int runClient(int argc, char* argv[])
 			{
 				block = block10000;
 			}
-		}*/
+		}
 
 #ifdef _WIN32
 		if ((retval = WSAStartup(MAKEWORD(2,2), &wsaData)) != 0) 
@@ -238,7 +238,7 @@ int runClient(int argc, char* argv[])
 						}
 
 						//empty message indicates we are done
-						send(message_socket, '0', 0, 0);
+						send(message_socket, "\0", 0, 0);
 
 						#ifdef DEBUG
 						printf("\n%s\n", "Finnished sending blocks, sending Bye");
