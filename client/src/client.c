@@ -1,4 +1,19 @@
 
+/*
+* -----------------------------------------------------------------------
+* File          : server.c
+* Project       : ispeed
+* Author        : Kyle Horsley
+* Editors       : Kyle Horsley
+* Date          : Jan. 8, 2019
+* Description   : This file has the function that starts and runs the client. It also parses the command line input to find the 
+*               : starting port numer. The server ip address is also printed to the screen.
+*               : The server first creates a TCP socket to find out what kind of connection is required for the benchmarking tests.  
+*               : It then uses either TCP or UPD as specified on the requested port to do benchmarking of the speed of the choosen 
+*               : socket type.
+* Credit        : https://docs.microsoft.com/en-us/windows/desktop/winsock/getting-started-with-winsock
+* ------------------------------------------------------------------------
+*/
 
 
 #include "../inc/client.h"
@@ -34,13 +49,14 @@ int runClient(int argc, char* argv[])
 	int message_socket = 0;
 #endif
 
+	//Check if the correct amount of arguments was passed
 	if (argc != 10)
 	{
 		printf("Not correct amount of Agruments");
 	}
 	else
 	{
-		for(i = 0; i < argc; i++)
+		for(i = 0; i < argc; i++) //Loop and store all arguments in their appropriate places.
 		{
 
 			//Send sck type, port, block size, block number.
@@ -81,12 +97,12 @@ int runClient(int argc, char* argv[])
 			}
 		}
 
-		if(blockSize != 1000 && blockSize != 2000 && blockSize != 5000 && blockSize != 10000)
+		if(blockSize != 1000 && blockSize != 2000 && blockSize != 5000 && blockSize != 10000) //Ensure a valid blocksize
 		{
 			printf("Invalid Number of Blocks\n");
 			return 0;
 		}
-		else
+		else //Set the block to an array of the appropriate block size.
 		{
 			if(blockSize == 1000)
 			{
@@ -115,7 +131,7 @@ int runClient(int argc, char* argv[])
 		else
 #endif
 		{
-			
+			//Initial socket connection
 			server.sin_family = AF_INET;
 			server.sin_port = htons(port);
 			server.sin_addr.s_addr = inet_addr(serverIP);
@@ -131,6 +147,7 @@ int runClient(int argc, char* argv[])
 
 			else
 			{
+				//Connect to a socket
 				if (connect(initial_socket, (struct sockaddr*)&server, sizeof(server)) < 0) 
 				{
 					printf("connect() failed: %s \n", serverIP);
@@ -138,11 +155,14 @@ int runClient(int argc, char* argv[])
 					WSACleanup();
 #endif			
 				}
-				printf("buf is: %s\n", buf);
+				//Send initial message containing command line data.
 				retval = send(initial_socket, buf, sizeof(buf), 0);
 				if (retval < 0) 
 				{
+#ifdef _WIN32					
+
 					printf("\nsend() failed with error code : %d\n" , WSAGetLastError());
+#endif
 					printf("send() failed: error %d\n", i);
 #ifdef _WIN32					
 					WSACleanup();
@@ -150,16 +170,16 @@ int runClient(int argc, char* argv[])
 					return 0;
 				}
 
-				     #ifdef _WIN32
+#ifdef _WIN32
 				        // cleanup
 				        closesocket(initial_socket);
 				        WSACleanup();
-				    #endif
+#endif
 
-				    #ifdef linux
+#ifdef linux
 				        //shut server down
 				        close(initial_socket);
-				    #endif
+#endif
 #ifdef _WIN32
 				Sleep(1000);
 #endif
@@ -168,7 +188,7 @@ int runClient(int argc, char* argv[])
 #endif
 
 #ifdef _WIN32
-				if ((retval = WSAStartup(MAKEWORD(2,2), &wsaData)) != 0) 
+				if ((retval = WSAStartup(MAKEWORD(2,2), &wsaData)) != 0) //Reconnect
 				{
 					printf("WSAStartup failed with error\n");
 					WSACleanup();
@@ -200,7 +220,7 @@ int runClient(int argc, char* argv[])
 
 					else
 					{
-						if (connect(message_socket, (struct sockaddr*)&server, sizeof(server)) < 0) 
+						if (connect(message_socket, (struct sockaddr*)&server, sizeof(server)) < 0)  //Connect back to socket
 						{
 							printf("Connect() failed to connect to server at ip: %s \n", serverIP);
 #ifdef _WIN32									
@@ -209,18 +229,16 @@ int runClient(int argc, char* argv[])
 #endif			
 						}
 					
-						for(i =  0; i < numBlocks; i++)
+						for(i =  0; i < numBlocks; i++) //Loop the number of blocks given from the user/
 						{
            					sprintf(block, "%d", i);
-           					//printf("%s ", block);
-           					//printf("Block size: %zu\n", sizeof(block));
 
-           					if(socketType == SOCK_STREAM)
+           					if(socketType == SOCK_STREAM) //If TCP, send 
            					{
 
 								retval = send(message_socket, block, blockSize, 0);
 							}
-							else
+							else //Else linux, send differently.
 							{
 								retval = sendto (message_socket, block, strlen(block), 0, (struct sockaddr *)&server, len); 
 							}
@@ -234,7 +252,7 @@ int runClient(int argc, char* argv[])
 #endif					
 								break;
 							}
-							memset(block, 0, blockSize);
+							memset(block, 0, blockSize); //Clear the block
 						}
 
 						//empty message indicates we are done
@@ -245,6 +263,7 @@ int runClient(int argc, char* argv[])
 						#endif
 
 #ifdef _WIN32
+						//Close all the sockets
 						closesocket(message_socket);
 						closesocket(initial_socket);
 						WSACleanup();					
