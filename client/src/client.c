@@ -6,14 +6,13 @@
 
 int runClient(int argc, char* argv[])
 {
-	socketInfo initialConnect;
 	int port = DEFAULT_PORT;
 	int i =0;
 	int socketType = 0;
 	int userPort = 0;
 	int numBlocks = 0;
 	int blockSize = 0;
-	char* block;
+	char block[10000] =  {'\0'};
 	char* serverIP = NULL;
 	int retval = 0;
 	char * buffer = NULL;
@@ -24,6 +23,7 @@ int runClient(int argc, char* argv[])
 	char buf[BUFSIZ] = {'\0'};
 	unsigned int addr;
 	struct sockaddr_in server;
+	int len = sizeof(server);
 
 #ifdef _WIN32
 	WSADATA wsaData;
@@ -86,7 +86,7 @@ int runClient(int argc, char* argv[])
 			printf("Invalid Number of Blocks\n");
 			return 0;
 		}
-		else
+/*		else
 		{
 			if(blockSize == 1000)
 			{
@@ -102,9 +102,9 @@ int runClient(int argc, char* argv[])
 			}
 			else if(blockSize == 10000)
 			{
-				block = block5000;
+				block = block10000;
 			}
-		}
+		}*/
 
 #ifdef _WIN32
 		if ((retval = WSAStartup(MAKEWORD(2,2), &wsaData)) != 0) 
@@ -214,13 +214,17 @@ int runClient(int argc, char* argv[])
            					sprintf(block, "%d", i);
            					//printf("%s ", block);
            					//printf("Block size: %zu\n", sizeof(block));
-           					/*int len = sizeof(server);
-           					if (sendto(message_socket, block, strlen(block) , 0 , (struct sockaddr *) &server, len) == SOCKET_ERROR)
-							{
-								printf("sendto() failed with error code : %d" , WSAGetLastError());
-								exit(EXIT_FAILURE);
+
+           					if(socketType == SOCK_STREAM)
+           					{
+
+								retval = send(message_socket, block, blockSize, 0);
 							}
-*/							retval = send(message_socket, block, blockSize, 0); //sendto (message_socket, block, strlen(block), 0, (struct sockaddr *)&server, len);
+							else
+							{
+								retval = sendto (message_socket, block, strlen(block), 0, (struct sockaddr *)&server, len); 
+							}
+
 							if (retval < 0) 
 							{
 								printf("send() failed: error.\n\tI = %d\n", i);
@@ -234,22 +238,12 @@ int runClient(int argc, char* argv[])
 						}
 
 						//empty message indicates we are done
-						send(message_socket, '\0', 0, 0);
+						send(message_socket, '0', 0, 0);
 
 						#ifdef DEBUG
 						printf("\n%s\n", "Finnished sending blocks, sending Bye");
 						#endif
 
-/*						strcpy(buf, "Bye");
-						retval = send(initial_socket, buf, sizeof(buf), 0);
-						if (retval < 0) 
-						{
-							printf("send() failed: error %d\n", i);
-#ifdef _WIN32					
-							WSACleanup();
-#endif					
-							return 0;
-						}*/
 #ifdef _WIN32
 						closesocket(message_socket);
 						closesocket(initial_socket);
@@ -268,11 +262,3 @@ int runClient(int argc, char* argv[])
 	return 0;
 }
 
-
-/*int GetConnection()
-{
-
-			server.sin_family = AF_INET;
-			server.sin_port = htons(port);
-			server.sin_addr.s_addr = inet_addr(serverIP);
-}*/
